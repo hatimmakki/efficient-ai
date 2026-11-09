@@ -1,0 +1,10 @@
+[package]
+name = "outline"
+version = "0.1.0"
+edition = "2021"
+description = "Structure-aware code outlines, targeted symbol reads, and enclosing-symbol search for AI coding agents."
+license = "Apache-2.0"
+
+[[bin]]
+name = "outline"
+path = "src/main.rs"
