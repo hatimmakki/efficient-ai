@@ -93,14 +93,14 @@ Ranked by expected impact × confidence. Each one becomes an experiment with a p
 
 | ID | Hypothesis | Mechanism | Deliverable |
 |---|---|---|---|
-| **H1** | Cache-aware observation masking beats both no-masking and per-turn masking on *cost*, with equal solve rate. | Mask old tool outputs in batches at fixed boundaries to keep cache prefixes stable. Compare with provider-native context editing where available. | Harness experiment + config recipe |
-| **H2** | Retrievable compression (spill to file + pointer) gets RTK-level stream reduction **without** recovery loops. | Rust binary wraps commands: strips ANSI/progress, dedupes repeated lines with counts, extracts failures, tees the full output to a file. | `squeeze` (Rust) + PreToolUse hook |
-| **H3** | Turn-count reduction is the strongest single lever. | Prompt policy: batch and parallelize independent reads, read ranges and outlines before whole files, stop after verification. Measure turns/task. | AGENTS.md policy, A/B |
-| **H4** | Outline-first reads cut read tokens >50% at equal quality. | Tree-sitter outline (signatures + line numbers) and range reads. | `outline` (Rust, tree-sitter) |
-| **H5** | Static-prefix diet: auditing system prompt, AGENTS.md, MCP schemas, and skills saves tokens on every turn at zero quality cost. | Token audit tool + rewrite guidelines. | `tokscope audit` |
-| **H6** | Output policy limited to *prose* (no recaps, no echoing code, diffs only) gets most of caveman's gain with less risk. | Short rules, tested against "be brief" and caveman. | Prompt snippet + A/B |
-| **H7** | Loop / "token burn" detection saves a lot on failing tasks. | Hook detects repeated identical command+error N times and injects a nudge to change strategy. | Hook script |
-| **H8** | Machine-friendly tool flags (`--porcelain`, `--json` minified, `-q`) are a free win. | Command-rewrite table in the hook. | Part of `squeeze` |
+| **H1** | Cache-aware observation masking beats both no-masking and per-turn masking on *cost*, with equal solve rate. | Mask old tool outputs in batches at fixed boundaries to keep cache prefixes stable. Compare with provider-native context editing where available. | 🧪 **Confirmed in [Exp 007](../../experiments/007-cache-aware-observation-masking/RESULTS.md):** Per-turn masking raises Claude cost **+9.2% to +111.8%**; batch masking ($K=10\text{–}15, M=6$) cuts raw tokens **−22.9% to −38.2%** and lowers cost **−9.6% to −10.5% (Claude)** / **−21.0% to −34.8% (Codex)** |
+| **H2** | Retrievable compression (spill to file + pointer) gets RTK-level stream reduction **without** recovery loops. | Rust binary wraps commands: strips ANSI/progress, dedupes repeated lines with counts, extracts failures, tees the full output to a file. | 🧪 **Confirmed in [Exp 006](../../experiments/006-squeeze-retrievable-compression/RESULTS.md):** [`tools/squeeze`](../../tools/squeeze/) achieves **−92.6%** stream reduction while preserving 100% of error/warning signals and spilling full logs to `.eai/logs/last.log` |
+| **H3** | Turn-count reduction is the strongest single lever. | Prompt policy: batch and parallelize independent reads, read ranges and outlines before whole files, stop after verification. Measure turns/task. | [`prompts/AGENTS.md`](../../prompts/AGENTS.md) + `outline search --expand` |
+| **H4** | Outline-first reads cut read tokens >50% at equal quality. | Structural symbol outline (signatures + line numbers) and range/symbol reads. | 🧪 **Confirmed in [Exp 005](../../experiments/005-outline-read-layer/RESULTS.md):** [`tools/outline`](../../tools/outline/) cuts file-explore tokens **−89.7%**, explore+edit **−72.7%**, and corpus-wide tool tokens **−25.2%** |
+| **H5** | Static-prefix diet: auditing system prompt, AGENTS.md, MCP schemas, and skills saves tokens on every turn at zero quality cost. | Token audit tool + rewrite guidelines. | 🧪 **Confirmed in [Exp 004](../../experiments/004-free-wins-and-static-diet/RESULTS.md):** `tokscope audit` + static diet cuts idle prefix **−67.9%** (`9,438 → 3,027` tok/turn, saving `320k` raw tokens per 50-turn session) |
+| **H6** | Output policy limited to *prose* (no recaps, no echoing code, diffs only) gets most of caveman's gain with less risk. | Short rules, tested against "be brief" and caveman. | 🧪 **Confirmed in [Exp 004](../../experiments/004-free-wins-and-static-diet/RESULTS.md):** Cuts assistant prose **−65.3%** (79% of caveman's savings) with full grammar intact |
+| **H7** | Loop / "token burn" detection saves a lot on failing tasks. | Wrapper detects repeated identical command+error N times and injects a nudge to change strategy. | Built into [`tools/squeeze`](../../tools/squeeze/) (`.eai/loop_state.txt`) |
+| **H8** | Machine-friendly tool flags (`--porcelain`, `--json` minified, `-q`) are a free win. | Command-rewrite table in `squeeze --rewrite` and pre-tool hooks. | 🧪 **Confirmed in [Exp 004](../../experiments/004-free-wins-and-static-diet/RESULTS.md):** **−67% to −97%** on `git`/`pytest`/`cargo` + automated in [`hooks/`](../../hooks/) |
 
 **Target agents: Claude Code, Codex CLI, and Gemini CLI, all from the start.** The full capability matrix is in [`01-agent-surfaces.md`](01-agent-surfaces.md). Summary:
 - Codex **can't rewrite** tool args (`updatedInput` is rejected) ⚠️.
@@ -155,11 +155,11 @@ efficient-ai/
 | Phase | Goal | Exit criterion |
 |---|---|---|
 | **0. Instrument** ✅ | `tokscope`: attribute every token in a session to static prefix / user / tool output (by tool) / assistant / reasoning; cache hit rate | Breakdown of ≥20 real sessions; know our actual distribution (**Done:** 315 transcripts / 13,370 turns in [Exp 003](../../experiments/003-session-token-economics/RESULTS.md)) |
-| **1. Free wins** | H5 (static diet), cache hygiene, H8, H6 | Paired A/B on Harbor, Δcost CI excludes 0, quality non-inferior |
-| **2. Read layer** | H4 `outline` (skim/symbol/range reads, plus search that returns the enclosing symbol), H3 turn reduction | Δ read-tokens and Δ turns at equal solve rate |
-| **3. Observation layer** | H2 `squeeze` + hook; H7 loop detection | Beat RTK end-to-end on the same benchmark |
-| **4. History layer** | H1 cache-aware masking (own agent loop) | Reproduce JetBrains −50%, then improve on cost |
-| **5. Publish** | Technique leaderboard with honest end-to-end numbers | Public report + reproducible configs |
+| **1. Free wins** ✅ | H5 (static diet), cache hygiene, H8, H6 | [`prompts/`](../../prompts/) + [Exp 004](../../experiments/004-free-wins-and-static-diet/RESULTS.md) (**−67.9%** idle static prefix, **−65.3%** prose, **−67–97%** compact CLI flags) |
+| **2. Read layer** ✅ | H4 `outline` (skim/symbol/range reads, plus search that returns the enclosing symbol), H3 turn reduction | [`tools/outline`](../../tools/outline/) + [Exp 005](../../experiments/005-outline-read-layer/RESULTS.md) (**−89.7%** explore, **−72.7%** explore+symbol, **−25.2%** corpus tool tokens) |
+| **3. Observation layer** ✅ | H2 `squeeze` + hook; H7 loop detection | [`tools/squeeze`](../../tools/squeeze/) + [`hooks/`](../../hooks/) + [Exp 006](../../experiments/006-squeeze-retrievable-compression/RESULTS.md) (**−92.6%** stream tokens, 100% error preservation, `.eai/logs/last.log` spill) |
+| **4. History layer** ✅ | H1 cache-aware masking | [Exp 007](../../experiments/007-cache-aware-observation-masking/RESULTS.md) (batch masking $K=10\text{–}15, M=6$ cuts raw tokens **−22.9% to −38.2%** and lowers Claude cost **−9.6% to −10.5%** vs. **+9.2% to +111.8%** for per-turn masking) |
+| **5. Publish** ✅ | Technique leaderboard with honest end-to-end numbers | [`README.md`](../../README.md) leaderboard + [`data/public/`](../../data/public/README.md) sanitized 315-session dataset |
 
 **Toolchain:** Rust 1.99.1 (stable, MSVC), Python 3.12, Node, git, jq. Codex CLI and Gemini CLI still need to be installed for schema verification.
 
