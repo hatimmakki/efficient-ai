@@ -65,25 +65,50 @@ Using [`tokscope`](tools/tokscope/) across **315 real Claude Code transcripts (6
 
 ---
 
-## Quickstart: The `efficient-ai` Toolkit
+## 1-Command Install (Plugin, Extension, or Skills)
 
-### 1. `tokscope` — Profile Your Own Sessions & Audit Static Prefix (Python)
+`efficient-ai` ships as a native plugin/extension and skill pack (**118 idle tokens/turn total** across all 3 skills) plus a zero-dependency unified CLI (`scripts/eai.py`) that automatically accelerates with compiled Rust binaries when available.
 
+### Option A: Claude Code Plugin (Skills +Slash Commands + `PreToolUse` Hooks)
+Inside Claude Code, run:
+```text
+/plugin marketplace add hatimmakki/efficient-ai
+/plugin install efficient-ai@efficient-ai
+```
+This installs:
+- **Skills:** `efficient-coding`, `outline`, `tokscope`
+- **Slash commands:** `/tokscope`, `/prefix-audit`, `/outline`
+- **`PreToolUse` Hook:** Automatically rewrites verbose CLI calls (`git status` → `git status -sb`, `pytest` → `pytest -q --tb=short`, `cargo test` → `cargo test -q`) and nudges on whole-file reads $>350$ lines.
+
+### Option B: Universal Agent Skills (`Claude Code`, `Codex CLI`, `Gemini CLI`, `Cursor`)
 ```bash
-python -m venv .venv
-# macOS / Linux:
-.venv/bin/pip install -e tools/tokscope
-.venv/bin/tokscope analyze                   # Full-session token economics & history amplification
-.venv/bin/tokscope audit . --include-user    # Audit AGENTS.md, CLAUDE.md, skills, & MCP schemas
-.venv/bin/tokscope selftest                  # Verify Claude, Codex, and Gemini parsers
-
-# Windows (PowerShell):
-.venv\Scripts\pip install -e tools/tokscope
-.venv\Scripts\tokscope analyze
-.venv\Scripts\tokscope audit . --include-user
+npx skills add hatimmakki/efficient-ai
 ```
 
-### 2. `outline` — Structure-Aware File Reader & Enclosing-Symbol Search (Rust)
+### Option C: Gemini CLI Extension
+```bash
+gemini extensions install https://github.com/hatimmakki/efficient-ai
+```
+
+### Option D: Zero-Dependency Unified CLI (`scripts/eai.py`)
+No virtualenv, `pip`, or Rust build required—works out of the box with standard Python 3.10+:
+```bash
+git clone https://github.com/hatimmakki/efficient-ai.git
+cd efficient-ai
+
+python scripts/eai.py analyze                  # Profile your ~/.claude/projects sessions
+python scripts/eai.py audit . --include-user   # Audit AGENTS.md, CLAUDE.md, skills, & MCP schemas
+python scripts/eai.py outline path/to/file.py  # Structure-aware symbol outline [Lstart-Lend]
+python scripts/eai.py setup --project /my/repo # Copy lean AGENTS.md (227 tok) + CLAUDE.md shim
+```
+
+---
+
+## Native Rust Acceleration (Optional)
+
+For sub-millisecond AST/symbol outlines and stream compression, build the zero-dependency Rust binaries (`scripts/eai.py` will automatically detect and use them):
+
+### 1. `outline` — Structure-Aware File Reader & Enclosing-Symbol Search (Rust)
 
 ```bash
 cargo build --release --manifest-path tools/outline/Cargo.toml
@@ -98,7 +123,7 @@ cargo build --release --manifest-path tools/outline/Cargo.toml
 ./tools/outline/target/release/outline search "cache_write" tools/
 ```
 
-### 3. `squeeze` — Lossless Retrievable Command Wrapper & Loop Detector (Rust)
+### 2. `squeeze` — Lossless Retrievable Command Wrapper & Loop Detector (Rust)
 
 ```bash
 cargo build --release --manifest-path tools/squeeze/Cargo.toml
@@ -109,11 +134,6 @@ cargo build --release --manifest-path tools/squeeze/Cargo.toml
 # Install portable PATH shims for Claude Code, Codex CLI, and Gemini CLI
 ./tools/squeeze/target/release/squeeze --install-shims .eai/shims
 ```
-
-### 4. Drop-In Prompts & Hooks
-
-- **Single-source agent instructions ([`prompts/`](prompts/README.md)):** Copy [`prompts/AGENTS.md`](prompts/AGENTS.md) (**227 tokens**) + [`prompts/CLAUDE.md`](prompts/CLAUDE.md) (`@AGENTS.md`, **3 tokens**).
-- **Pre-tool hooks ([`hooks/`](hooks/README.md)):** Configure [`.claude/settings.json`](hooks/claude.settings.json) or [`.gemini/settings.json`](hooks/gemini.settings.json) to automatically rewrite verbose CLI commands and nudge on oversized whole-file reads.
 
 ---
 

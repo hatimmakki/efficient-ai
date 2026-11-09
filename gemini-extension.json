@@ -1,0 +1,6 @@
+{
+  "name": "efficient-ai",
+  "description": "Same quality, fewer tokens: tokscope session profiler, outline structure-aware reader, squeeze lossless output compressor, and compact-flag hooks.",
+  "version": "0.1.0",
+  "contextFileName": "GEMINI.md"
+}

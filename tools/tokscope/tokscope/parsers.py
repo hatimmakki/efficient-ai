@@ -8,11 +8,13 @@ import re
 from pathlib import Path
 from typing import Iterable
 
-import tiktoken
+try:
+    import tiktoken
+    ENC = tiktoken.get_encoding("o200k_base")
+except ImportError:
+    ENC = None
 
 from .models import SessionMetrics, ToolObservation, TurnUsage
-
-ENC = tiktoken.get_encoding("o200k_base")
 
 SEARCH_PROGRAMS = {
     "rg", "grep", "egrep", "find", "fd", "ag", "ls", "tree",
@@ -40,7 +42,10 @@ CD_PREFIX_RE = re.compile(
 def count_tokens(text: str) -> int:
     if not text:
         return 0
-    return len(ENC.encode(text, disallowed_special=()))
+    if ENC is not None:
+        return len(ENC.encode(text, disallowed_special=()))
+    # Fast BPE-calibrated fallback (~3.8 chars/token on code/logs) when tiktoken is not installed
+    return max(1, int(len(text) / 3.8))
 
 
 def anonymize_id(raw_id: str) -> str:

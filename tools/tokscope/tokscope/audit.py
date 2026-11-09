@@ -7,10 +7,13 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-import tiktoken
-
-ENC_O200K = tiktoken.get_encoding("o200k_base")
-ENC_CL100K = tiktoken.get_encoding("cl100k_base")
+try:
+    import tiktoken
+    ENC_O200K = tiktoken.get_encoding("o200k_base")
+    ENC_CL100K = tiktoken.get_encoding("cl100k_base")
+except ImportError:
+    ENC_O200K = None
+    ENC_CL100K = None
 
 FRONTMATTER_RE = re.compile(r"^---\s*\r?\n(.*?)\r?\n---\s*(?:\r?\n|$)", re.DOTALL)
 
@@ -28,10 +31,13 @@ class PrefixItem:
 def _tok_pair(text: str) -> tuple[int, int]:
     if not text:
         return 0, 0
-    return (
-        len(ENC_O200K.encode(text, disallowed_special=())),
-        len(ENC_CL100K.encode(text, disallowed_special=())),
-    )
+    if ENC_O200K is not None and ENC_CL100K is not None:
+        return (
+            len(ENC_O200K.encode(text, disallowed_special=())),
+            len(ENC_CL100K.encode(text, disallowed_special=())),
+        )
+    est = max(1, int(len(text) / 3.8))
+    return est, est
 
 
 def audit_directory(root: Path, include_user: bool = False) -> list[PrefixItem]:

@@ -1,0 +1,18 @@
+{
+  "name": "efficient-ai",
+  "description": "End-to-end token and cost reduction toolkit for AI coding agents",
+  "owner": {
+    "name": "Hatim Makki"
+  },
+  "plugins": [
+    {
+      "name": "efficient-ai",
+      "description": "Same quality, fewer tokens: tokscope session profiler, outline structure-aware reader, squeeze lossless output wrapper, and PreToolUse compact-flag hooks.",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "Hatim Makki"
+      }
+    }
+  ]
+}

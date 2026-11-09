@@ -1,0 +1,21 @@
+{
+  "name": "efficient-ai",
+  "description": "Same quality, fewer tokens: structure-aware reading (outline), lossless output compression (squeeze), session token profiler (tokscope), and token-budgeted agent policies.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Hatim Makki",
+    "url": "https://github.com/hatimmakki"
+  },
+  "homepage": "https://github.com/hatimmakki/efficient-ai",
+  "repository": "https://github.com/hatimmakki/efficient-ai",
+  "license": "Apache-2.0",
+  "keywords": [
+    "tokens",
+    "cost-optimization",
+    "prompt-caching",
+    "tokscope",
+    "outline",
+    "squeeze",
+    "skills"
+  ]
+}

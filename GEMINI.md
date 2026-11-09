@@ -1,0 +1,1 @@
+@prompts/AGENTS.md
