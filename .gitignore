@@ -1,0 +1,109 @@
+# ============================================================
+#  efficient-ai .gitignore
+#  Rule of thumb: publish code, docs, configs, and *aggregated*
+#  results. Never publish secrets, raw agent transcripts, or raw
+#  benchmark run dirs. Those may contain private code, file paths,
+#  usernames, or API keys echoed by tools.
+# ============================================================
+
+# ---------- Secrets & credentials ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials*.json
+*.secret
+.netrc
+.npmrc
+.pypirc
+
+# ---------- Agent-local / personal configs ----------
+# Project-level shareable configs (e.g. .claude/settings.json, hooks)
+# ARE allowed; machine/user-local overrides are not.
+.claude/settings.local.json
+.claude/.credentials*
+.claude/projects/
+.claude/todos/
+.claude/statsig/
+.claude/shell-snapshots/
+.codex/auth.json
+.codex/sessions/
+.codex/history*
+.gemini/oauth_creds.json
+.gemini/google_accounts.json
+.gemini/tmp/
+CLAUDE.local.md
+AGENTS.local.md
+
+# ---------- Raw data, transcripts, benchmark runs ----------
+# Raw session logs / traces may leak private code and paths.
+# Publish only sanitized data under data/public/.
+data/raw/
+data/private/
+transcripts/
+traces/
+*.transcript.jsonl
+runs/
+jobs/
+results/raw/
+experiments/**/out/
+experiments/**/runs/
+# Harbor / SWE-bench / Terminal-Bench artifacts
+.harbor/
+logs/
+*.log
+
+# ---------- Scratch ----------
+scratch/
+tmp/
+.tmp/
+*.bak
+*.orig
+*.swp
+
+# ---------- Model weights & large caches ----------
+*.safetensors
+*.gguf
+*.onnx
+*.bin
+*.pt
+*.ckpt
+.cache/
+hf_cache/
+tiktoken_cache/
+
+# ---------- Python ----------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# ---------- Rust ----------
+# Keep Cargo.lock committed (we ship binaries).
+target/
+**/*.rs.bk
+
+# ---------- Node ----------
+node_modules/
+.pnpm-store/
+
+# ---------- OS / editors ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
