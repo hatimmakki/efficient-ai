@@ -1,0 +1,10 @@
+[package]
+name = "squeeze"
+version = "0.1.0"
+edition = "2021"
+description = "Lossless-by-default retrievable tool-output compression, command flag rewriting, and loop detection for AI coding agents."
+license = "Apache-2.0"
+
+[[bin]]
+name = "squeeze"
+path = "src/main.rs"

@@ -54,6 +54,7 @@ experiments/**/out/
 experiments/**/runs/
 # Harbor / SWE-bench / Terminal-Bench artifacts
 .harbor/
+.eai/
 logs/
 *.log
 
