@@ -9,17 +9,15 @@ Use this skill when the user asks to analyze where their agent tokens or API cos
 
 ## Commands
 
-Run via the unified zero-dependency CLI (`scripts/eai.py`) or the installed `tokscope` binary:
-
 ```bash
 # 1. Analyze full-session token economics, cache hit rate, & history amplification
-python scripts/eai.py analyze
+tokscope analyze
 
 # 2. Audit static-prefix token overhead in the project and user home directory
-python scripts/eai.py audit . --include-user
+tokscope audit . --include-user
 
 # 3. Export privacy-sanitized aggregate session metrics
-python scripts/eai.py sanitize --out data/public/sessions.json
+tokscope sanitize --out data/public/sessions.json
 ```
 
 ## Privacy Rule
