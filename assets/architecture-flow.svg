@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 860" width="100%" height="100%" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="greenCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#022c22" stop-opacity="0.75"/>
+    </linearGradient>
+    <linearGradient id="redCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#450a0a" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1f1218" stop-opacity="0.75"/>
+    </linearGradient>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#38bdf8"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="860" rx="16" fill="url(#bgGrad)" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Top Header Banner -->
+  <rect x="28" y="24" width="1144" height="82" rx="12" fill="url(#headerGrad)" stroke="#334155" stroke-width="1"/>
+  <text x="52" y="58" fill="#f8fafc" font-size="24" font-weight="800">efficient-ai — End-to-End Agent Token &amp; Cost Pipeline</text>
+  <text x="52" y="85" fill="#94a3b8" font-size="14">Intercepts the 4 layers where tokens actually go across Claude Code, Codex CLI, and Gemini CLI</text>
+
+  <!-- Agent Badges -->
+  <rect x="815" y="43" width="105" height="28" rx="6" fill="#1e293b" stroke="#475569"/>
+  <text x="867" y="62" fill="#e2e8f0" font-size="12" font-weight="600" text-anchor="middle">Claude Code</text>
+  <rect x="930" y="43" width="95" height="28" rx="6" fill="#1e293b" stroke="#475569"/>
+  <text x="977" y="62" fill="#e2e8f0" font-size="12" font-weight="600" text-anchor="middle">Codex CLI</text>
+  <rect x="1035" y="43" width="115" height="28" rx="6" fill="#1e293b" stroke="#475569"/>
+  <text x="1092" y="62" fill="#e2e8f0" font-size="12" font-weight="600" text-anchor="middle">Gemini CLI</text>
+
+  <!-- Column Headers -->
+  <text x="195" y="136" fill="#cbd5e1" font-size="13" font-weight="700" text-anchor="middle" letter-spacing="1">AGENT TURN STAGE</text>
+  <text x="530" y="136" fill="#fca5a5" font-size="13" font-weight="700" text-anchor="middle" letter-spacing="1">WITHOUT EFFICIENT-AI (DEFAULT / LOSSY TOOLS)</text>
+  <text x="945" y="136" fill="#6ee7b7" font-size="13" font-weight="700" text-anchor="middle" letter-spacing="1">WITH EFFICIENT-AI (LOSSLESS &amp; CACHE-AWARE)</text>
+
+  <!-- ======================================================================= -->
+  <!-- ROW 1: STATIC PREFIX -->
+  <!-- ======================================================================= -->
+  <rect x="28" y="152" width="330" height="135" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <rect x="44" y="168" width="96" height="22" rx="4" fill="#0284c7"/>
+  <text x="92" y="183" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">1. STATIC PREFIX</text>
+  <text x="44" y="212" fill="#f8fafc" font-size="17" font-weight="700">System &amp; Skills Loaded</text>
+  <text x="44" y="235" fill="#94a3b8" font-size="13">Sent on every turn (54.4x avg</text>
+  <text x="44" y="253" fill="#94a3b8" font-size="13">amplification across a session)</text>
+  <text x="44" y="274" fill="#38bdf8" font-size="12" font-family="Consolas, monospace" font-weight="600">Tool: tokscope audit + prompts/</text>
+
+  <!-- Row 1: Without -->
+  <rect x="378" y="152" width="305" height="135" rx="10" fill="url(#redCard)" stroke="#7f1d1d" stroke-width="1.2"/>
+  <text x="396" y="180" fill="#fca5a5" font-size="14" font-weight="700">Bloated Prefix (9,438 tok / turn)</text>
+  <text x="396" y="204" fill="#e2e8f0" font-size="12.5">• Verbose CLAUDE.md (1,515 tok)</text>
+  <text x="396" y="224" fill="#e2e8f0" font-size="12.5">• Multi-line skill YAML (5,811 tok)</text>
+  <text x="396" y="244" fill="#e2e8f0" font-size="12.5">• Pretty-printed MCP schemas (2,112 tok)</text>
+  <text x="396" y="270" fill="#f87171" font-size="12" font-weight="700">50-turn footprint: 471,900 raw tokens</text>
+
+  <!-- Row 1: With -->
+  <rect x="703" y="152" width="469" height="135" rx="10" fill="url(#greenCard)" stroke="#10b981" stroke-width="1.5"/>
+  <text x="723" y="180" fill="#6ee7b7" font-size="14.5" font-weight="700">Static-Prefix Diet (3,027 tok / turn)</text>
+  <rect x="1062" y="162" width="92" height="24" rx="12" fill="#059669"/>
+  <text x="1108" y="178" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">-67.9% tok</text>
+  <text x="723" y="205" fill="#e2e8f0" font-size="12.5">• Single-source AGENTS.md (227 tok) + @AGENTS.md shim</text>
+  <text x="723" y="225" fill="#e2e8f0" font-size="12.5">• 1-sentence skill description cap (&lt;=38 tok/skill idle)</text>
+  <text x="723" y="245" fill="#e2e8f0" font-size="12.5">• Minified MCP JSON schemas + zero dynamic timestamps</text>
+  <text x="723" y="270" fill="#34d399" font-size="12.5" font-weight="700">Saves 320,550 raw tokens per 50-turn session (zero quality loss)</text>
+
+  <!-- Connector 1 -> 2 -->
+  <line x1="193" y1="287" x2="193" y2="309" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- ======================================================================= -->
+  <!-- ROW 2: FILE READING LAYER (64% OF TOOL TOKENS) -->
+  <!-- ======================================================================= -->
+  <rect x="28" y="315" width="330" height="145" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <rect x="44" y="331" width="150" height="22" rx="4" fill="#0284c7"/>
+  <text x="119" y="346" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">2. READ LAYER (64% SHARE)</text>
+  <text x="44" y="375" fill="#f8fafc" font-size="17" font-weight="700">Code Exploration &amp; Reads</text>
+  <text x="44" y="398" fill="#94a3b8" font-size="13">Largest 10% of reads = 41.2% of</text>
+  <text x="44" y="416" fill="#94a3b8" font-size="13">all read tokens in real sessions</text>
+  <text x="44" y="442" fill="#38bdf8" font-size="12" font-family="Consolas, monospace" font-weight="600">Tool: outline (Rust CLI + Skill)</text>
+
+  <!-- Row 2: Without -->
+  <rect x="378" y="315" width="305" height="145" rx="10" fill="url(#redCard)" stroke="#7f1d1d" stroke-width="1.2"/>
+  <text x="396" y="343" fill="#fca5a5" font-size="14" font-weight="700">Blind Whole-File Reads</text>
+  <text x="396" y="367" fill="#e2e8f0" font-size="12.5">• 62.8% of Read calls load entire file</text>
+  <text x="396" y="387" fill="#e2e8f0" font-size="12.5">• Bare grep forces follow-up full read</text>
+  <text x="396" y="407" fill="#e2e8f0" font-size="12.5">• 500-line file = 4,810 tok x 48 turns</text>
+  <text x="396" y="438" fill="#f87171" font-size="12" font-weight="700">267.7M re-sent read tokens across corpus</text>
+
+  <!-- Row 2: With -->
+  <rect x="703" y="315" width="469" height="145" rx="10" fill="url(#greenCard)" stroke="#10b981" stroke-width="1.5"/>
+  <text x="723" y="343" fill="#6ee7b7" font-size="14.5" font-weight="700">Structure-Aware Reads (outline)</text>
+  <rect x="1062" y="325" width="92" height="24" rx="12" fill="#059669"/>
+  <text x="1108" y="341" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">-89.7% tok</text>
+  <text x="723" y="369" fill="#e2e8f0" font-size="12.5" font-family="Consolas, monospace">1. outline file.py           -&gt; [Lstart-Lend] signatures (267 tok)</text>
+  <text x="723" y="391" fill="#e2e8f0" font-size="12.5" font-family="Consolas, monospace">2. outline file.py --symbol  -&gt; exact function body (-72.7% tok)</text>
+  <text x="723" y="413" fill="#e2e8f0" font-size="12.5" font-family="Consolas, monospace">3. outline search "pat"      -&gt; resolves match to enclosing fn</text>
+  <text x="723" y="440" fill="#34d399" font-size="12.5" font-weight="700">Cuts corpus-wide read tokens by -47.2% (-118.1M re-sent tokens)</text>
+
+  <!-- Connector 2 -> 3 -->
+  <line x1="193" y1="460" x2="193" y2="482" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- ======================================================================= -->
+  <!-- ROW 3: OBSERVATION LAYER (BUILD / TEST / GIT) -->
+  <!-- ======================================================================= -->
+  <rect x="28" y="488" width="330" height="145" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <rect x="44" y="504" width="145" height="22" rx="4" fill="#0284c7"/>
+  <text x="116" y="519" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">3. OBSERVATION LAYER</text>
+  <text x="44" y="548" fill="#f8fafc" font-size="17" font-weight="700">Shell, Build, Test &amp; Git</text>
+  <text x="44" y="571" fill="#94a3b8" font-size="13">Intercepted via PreToolUse hook</text>
+  <text x="44" y="589" fill="#94a3b8" font-size="13">and portable PATH shims</text>
+  <text x="44" y="615" fill="#38bdf8" font-size="12" font-family="Consolas, monospace" font-weight="600">Tool: squeeze (Rust) + hooks/</text>
+
+  <!-- Row 3: Without -->
+  <rect x="378" y="488" width="305" height="145" rx="10" fill="url(#redCard)" stroke="#7f1d1d" stroke-width="1.2"/>
+  <text x="396" y="516" fill="#fca5a5" font-size="14" font-weight="700">Raw Spam or Lossy Filters</text>
+  <text x="396" y="540" fill="#e2e8f0" font-size="12.5">• Raw pytest/cargo dumps 2,600 tok</text>
+  <text x="396" y="560" fill="#e2e8f0" font-size="12.5">• Lossy filters drop needed error lines</text>
+  <text x="396" y="580" fill="#e2e8f0" font-size="12.5">• 1 recovery turn = 21,300 cost tok</text>
+  <text x="396" y="611" fill="#f87171" font-size="12" font-weight="700">Lossy filters cost +7.6% MORE end-to-end</text>
+
+  <!-- Row 3: With -->
+  <rect x="703" y="488" width="469" height="145" rx="10" fill="url(#greenCard)" stroke="#10b981" stroke-width="1.5"/>
+  <text x="723" y="516" fill="#6ee7b7" font-size="14.5" font-weight="700">Lossless Retrievable Compression (squeeze)</text>
+  <rect x="1062" y="498" width="92" height="24" rx="12" fill="#059669"/>
+  <text x="1108" y="514" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">-92.6% tok</text>
+  <text x="723" y="542" fill="#e2e8f0" font-size="12.5">• Strips ANSI/spinners, collapses duplicates [xN], elides PASSED</text>
+  <text x="723" y="562" fill="#e2e8f0" font-size="12.5">• Preserves 100% of errors, tracebacks, and compiler warnings</text>
+  <text x="723" y="582" fill="#e2e8f0" font-size="12.5" font-family="Consolas, monospace">• Pointer: [118 lines elided; full log: .eai/logs/last.log]</text>
+  <text x="723" y="611" fill="#34d399" font-size="12.5" font-weight="700">Zero recovery loops + automatic 3x stuck-loop breaker (H7)</text>
+
+  <!-- Connector 3 -> 4 -->
+  <line x1="193" y1="633" x2="193" y2="655" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- ======================================================================= -->
+  <!-- ROW 4: HISTORY & PROMPT CACHE LAYER -->
+  <!-- ======================================================================= -->
+  <rect x="28" y="661" width="330" height="145" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <rect x="44" y="677" width="155" height="22" rx="4" fill="#0284c7"/>
+  <text x="121" y="692" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">4. HISTORY &amp; CACHE LAYER</text>
+  <text x="44" y="721" fill="#f8fafc" font-size="17" font-weight="700">Multi-Turn Context &amp; Cache</text>
+  <text x="44" y="744" fill="#94a3b8" font-size="13">Cache reads = 0.1x price vs.</text>
+  <text x="44" y="762" fill="#94a3b8" font-size="13">Cache writes = 1.25x-2.0x price</text>
+  <text x="44" y="788" fill="#38bdf8" font-size="12" font-family="Consolas, monospace" font-weight="600">Tool: Batch Masking + tokscope</text>
+
+  <!-- Row 4: Without -->
+  <rect x="378" y="661" width="305" height="145" rx="10" fill="url(#redCard)" stroke="#7f1d1d" stroke-width="1.2"/>
+  <text x="396" y="689" fill="#fca5a5" font-size="14" font-weight="700">Naive Per-Turn Sliding Prune</text>
+  <text x="396" y="713" fill="#e2e8f0" font-size="12.5">• Masks turn t-M-1 on EVERY turn</text>
+  <text x="396" y="733" fill="#e2e8f0" font-size="12.5">• Invalidates prompt cache every turn!</text>
+  <text x="396" y="753" fill="#e2e8f0" font-size="12.5">• Multiplies 1.25x cache writes by 6.4x</text>
+  <text x="396" y="784" fill="#f87171" font-size="12" font-weight="700">Increases Claude bill +9.2% to +111.8%!</text>
+
+  <!-- Row 4: With -->
+  <rect x="703" y="661" width="469" height="145" rx="10" fill="url(#greenCard)" stroke="#10b981" stroke-width="1.5"/>
+  <text x="723" y="689" fill="#6ee7b7" font-size="14.5" font-weight="700">Cache-Aware Batch Masking (K=10-15, M=6)</text>
+  <rect x="1032" y="671" width="122" height="24" rx="12" fill="#059669"/>
+  <text x="1093" y="687" fill="#ffffff" font-size="12" font-weight="800" text-anchor="middle">-10.5% / -34.8% $</text>
+  <text x="723" y="715" fill="#e2e8f0" font-size="12.5">• Compacts old tool outputs ONLY at fixed K-turn boundaries</text>
+  <text x="723" y="735" fill="#e2e8f0" font-size="12.5">• Earlier compacted blocks stay frozen &amp; 100% cache-valid</text>
+  <text x="723" y="755" fill="#e2e8f0" font-size="12.5">• Preserves 98.1%-98.3% prompt-cache hit rate across sessions</text>
+  <text x="723" y="784" fill="#34d399" font-size="12.5" font-weight="700">Cuts raw tokens -22.9% to -38.2% AND lowers API bill on all models</text>
+
+  <!-- Footer Summary Bar -->
+  <text x="600" y="836" fill="#94a3b8" font-size="13" font-weight="600" text-anchor="middle">
+    Install in 1 command:   /plugin marketplace add hatimmakki/efficient-ai   •   npx skills add hatimmakki/efficient-ai   •   python scripts/eai.py analyze
+  </text>
+</svg>

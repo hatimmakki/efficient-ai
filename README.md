@@ -4,6 +4,10 @@
 
 `efficient-ai` is an open research project and toolkit for cutting the token and API cost of AI coding agents—with **Claude Code**, **Codex CLI**, and **Gemini CLI** supported as first-class targets from day one.
 
+<p align="center">
+  <img src="assets/architecture-flow.svg" width="100%" alt="efficient-ai Architecture and 4-Layer Token & Cost Pipeline" />
+</p>
+
 ---
 
 ## Why This Exists
