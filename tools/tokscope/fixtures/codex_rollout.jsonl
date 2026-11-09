@@ -1,0 +1,8 @@
+{"type":"turn_context","payload":{"model":"gpt-5-codex"}}
+{"type":"response_item","payload":{"type":"function_call","name":"shell","call_id":"call_1","arguments":"{\"command\":\"rg def src/\"}"}}
+{"type":"response_item","payload":{"type":"function_call_output","call_id":"call_1","output":"src/main.py:1:def main():"}}
+{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10000,"cached_input_tokens":8000,"output_tokens":250,"reasoning_output_tokens":100},"last_token_usage":{"input_tokens":10000,"cached_input_tokens":8000,"output_tokens":250,"reasoning_output_tokens":100}}}}
+{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10000,"cached_input_tokens":8000,"output_tokens":250,"reasoning_output_tokens":100},"last_token_usage":{"input_tokens":10000,"cached_input_tokens":8000,"output_tokens":250,"reasoning_output_tokens":100}}}}
+{"type":"response_item","payload":{"type":"function_call","name":"read_file","call_id":"call_2","arguments":"{\"path\":\"src/main.py\",\"start_line\":1,\"end_line\":20}"}}
+{"type":"response_item","payload":{"type":"function_call_output","call_id":"call_2","output":"def main():\n    pass"}}
+{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":22000,"cached_input_tokens":19000,"output_tokens":450,"reasoning_output_tokens":180},"last_token_usage":{"input_tokens":12000,"cached_input_tokens":11000,"output_tokens":200,"reasoning_output_tokens":80}}}}

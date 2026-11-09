@@ -1,0 +1,46 @@
+{
+  "sessionId": "synth-gemini-1",
+  "messages": [
+    {
+      "id": "u1",
+      "type": "user",
+      "content": "Check git status and read config"
+    },
+    {
+      "id": "g1",
+      "type": "gemini",
+      "model": "gemini-2.5-pro",
+      "usageMetadata": {
+        "promptTokenCount": 12000,
+        "cachedContentTokenCount": 9000,
+        "candidatesTokenCount": 150,
+        "thoughtsTokenCount": 60
+      },
+      "toolCalls": [
+        {
+          "name": "run_shell_command",
+          "args": {"command": "git status --short"},
+          "result": "M README.md"
+        }
+      ]
+    },
+    {
+      "id": "g2",
+      "type": "gemini",
+      "model": "gemini-2.5-pro",
+      "usageMetadata": {
+        "promptTokenCount": 14000,
+        "cachedContentTokenCount": 12000,
+        "candidatesTokenCount": 100,
+        "thoughtsTokenCount": 40
+      },
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "args": {"path": "README.md"},
+          "result": "# efficient-ai\nSame quality, fewer tokens."
+        }
+      ]
+    }
+  ]
+}

@@ -150,11 +150,11 @@ efficient-ai/
 └── data/public/          # sanitized, aggregated datasets only
 ```
 
-> 🧪 Ordering is informed by [experiment 002](../../experiments/002-tool-output-attribution/RESULTS.md): file reading is ~64% of tool-output tokens in real sessions, while build/test/git output is ~6%. So the read layer comes before the observation layer.
+> 🧪 Ordering is informed by [experiment 002](../../experiments/002-tool-output-attribution/RESULTS.md) and [experiment 003](../../experiments/003-session-token-economics/RESULTS.md): across 13,370 API turns (`2.59B` total tokens), each new input token is re-sent **54.4×** (`98.16%` cache hit rate). File reading is ~64% of first-occurrence tool tokens and ~57% of cumulative re-sent exposure, while build/test/git output is ~6%. So the read layer comes before the observation layer.
 
 | Phase | Goal | Exit criterion |
 |---|---|---|
-| **0. Instrument** | `tokscope`: attribute every token in a session to static prefix / user / tool output (by tool) / assistant / reasoning; cache hit rate | Breakdown of ≥20 real sessions; know our actual distribution |
+| **0. Instrument** ✅ | `tokscope`: attribute every token in a session to static prefix / user / tool output (by tool) / assistant / reasoning; cache hit rate | Breakdown of ≥20 real sessions; know our actual distribution (**Done:** 315 transcripts / 13,370 turns in [Exp 003](../../experiments/003-session-token-economics/RESULTS.md)) |
 | **1. Free wins** | H5 (static diet), cache hygiene, H8, H6 | Paired A/B on Harbor, Δcost CI excludes 0, quality non-inferior |
 | **2. Read layer** | H4 `outline` (skim/symbol/range reads, plus search that returns the enclosing symbol), H3 turn reduction | Δ read-tokens and Δ turns at equal solve rate |
 | **3. Observation layer** | H2 `squeeze` + hook; H7 loop detection | Beat RTK end-to-end on the same benchmark |
