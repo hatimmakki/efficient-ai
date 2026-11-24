@@ -86,16 +86,19 @@ irm https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.ps1
 cargo install --path tools/eai
 ```
 
-Then run **one command** to inspect your current spend or auto-configure every installed agent:
+Then run **one command** to inspect your current spend, auto-configure every installed agent, or open the local performance dashboard:
 ```bash
-eai analyze                # Auto-discovers Claude Code, Antigravity, Gemini CLI & Codex transcripts + Est. USD
+eai analyze --since 14d    # Auto-discovers Claude Code, Antigravity, Gemini CLI & Codex transcripts + Est. USD
 eai init                   # Auto-detects agents, merges hooks safely, installs lean AGENTS.md & baseline snapshot
+eai impact                 # Before vs. After project proof: USD/session, cache hit rate, recovery rate & advisor
+eai dashboard              # 100% local offline web UI (http://127.0.0.1:7420) with live charts & SVG card export
+eai watch                  # Live terminal monitor with real-time cache-bust alerts
+eai share                  # Generates privacy-sanitized SVG Efficiency Proof Card (eai-efficiency-card.svg)
 eai doctor                 # Verifies hooks, <10ms engine latency, shims, & static-prefix health
-eai stats                  # Tracks local tokens saved, recovery rate, & stuck loops prevented
 eai uninstall              # Cleanly removes efficient-ai hooks & managed blocks without touching your rules
 ```
 
-### 2. Native Plugin Marketplaces
+### 2. Native Plugin Marketplaces & Universal MCP
 
 #### Claude Code Plugin (Skills + `/prefix-audit` + Sub-10ms `PreToolUse` Hook)
 ```text
@@ -103,11 +106,11 @@ eai uninstall              # Cleanly removes efficient-ai hooks & managed blocks
 /plugin install efficient-ai@efficient-ai
 ```
 
-#### Antigravity Native Plugin (`.antigravity-plugin` + Root `hooks.json` + `rules/AGENTS.md` + Skills)
+#### Antigravity Native Plugin (`.antigravity-plugin` + Root `hooks.json` + Zero-Token Receipts + Skills)
 ```bash
 agy plugin install https://github.com/hatimmakki/efficient-ai
 ```
-Supports camelCase `PreToolUse` `overwrite` on `run_command`, recovery tracking on `read_file`, and full `transcript.jsonl` profiling in `eai analyze`.
+Supports camelCase `PreToolUse` `overwrite` on `run_command`, recovery tracking on `read_file`, zero-LLM-token `PostInvocation` savings cards (`metadata.user_markdown`), and full `transcript.jsonl` profiling in `eai analyze`.
 
 #### Gemini CLI Extension (`gemini-extension.json` + `BeforeTool` & `AfterTool` Hooks)
 ```bash
@@ -120,8 +123,10 @@ codex plugin marketplace add https://github.com/hatimmakki/efficient-ai.git
 eai init --agents codex    # Installs executable .eai/shims for pytest, cargo, npm, pnpm, yarn, go
 ```
 
-#### Universal Agent Skills (`Claude Code`, `Antigravity`, `Codex CLI`, `Gemini CLI`, `Cursor`)
+#### Cursor, Windsurf, Cline, Roo Code, Copilot & OpenCode (Ultra-Lean MCP Server — `<280` Idle Tokens)
 ```bash
+eai init --agents cursor   # Installs .cursor/rules/efficient-ai.mdc + .cursor/mcp.json
+eai init --mcp             # Wires .mcp.json (`eai mcp`: outline_file, outline_search, squeeze_run, eai_stats)
 npx skills add hatimmakki/efficient-ai
 ```
 
@@ -132,19 +137,20 @@ npx skills add hatimmakki/efficient-ai
 All tools are built into the single `eai` binary (standalone `outline`, `squeeze`, and `scripts/eai.py` remain available for backwards compatibility):
 
 ```bash
-# 1. Structure-aware file outlines & targeted symbol reads (−89.7% explore / −72.7% symbol read)
-eai outline tools/tokscope/tokscope/parsers.py
+# 1. Tree-sitter AST outlines (.gitignore-aware, multi-file, --budget token cap)
+eai outline tools/tokscope/tokscope/parsers.py --budget 300
 eai outline tools/tokscope/tokscope/parsers.py --symbol parse_claude_jsonl
 eai outline search "cache_write" tools/
 
-# 2. Lossless command compression, concurrency-safe .eai/logs/<id>.log spill & H7 loop detection
+# 2. Lossless command compression across 15+ runners, unique spill logs & H7 loop detection
 eai squeeze -- pytest -v
 eai squeeze -- cargo test
 
-# 3. Multi-agent session token, cache hit, & USD cost profiler + static-prefix audit
-eai analyze                        # Auto-discovers Claude, Antigravity, Gemini CLI & Codex
-eai audit . --include-user         # Audits AGENTS.md, CLAUDE.md, GEMINI.md, skills & MCP configs
-eai stats                          # Shows local savings, squeeze recovery rate & Pre-EAI baseline
+# 3. AI performance monitoring, Before/After proof, local web dashboard & shareable SVG cards
+eai impact --since 30d             # Before vs. After table + quality guardrails + optimization advisor
+eai dashboard --port 7420          # Local offline web dashboard (127.0.0.1:7420)
+eai share --out proof.svg          # Privacy-sanitized SVG efficiency proof card
+eai audit . --include-user         # Audits AGENTS.md, CLAUDE.md, GEMINI.md, Cursor rules, skills & MCP configs
 ```
 
 ---

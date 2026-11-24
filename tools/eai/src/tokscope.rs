@@ -125,9 +125,25 @@ pub struct SessionMetrics {
     pub session_id: String,
     pub agent: String,
     pub is_sidechain: bool,
+    pub mtime_secs: u64,
     pub turns: Vec<TurnUsage>,
     pub observations: Vec<ToolObservation>,
     pub duplicate_api_lines_skipped: usize,
+}
+
+/// Howard Hinnant's civil-from-days algorithm: convert Unix timestamp (seconds) to `YYYY-MM-DD` (UTC).
+pub fn unix_secs_to_date(secs: u64) -> String {
+    let z = (secs / 86_400) as i64 + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+    let doe = (z - era * 146_097) as u64;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146_096) / 365;
+    let y = (yoe as i64) + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let yr = if m <= 2 { y + 1 } else { y };
+    format!("{:04}-{:02}-{:02}", yr, m, d)
 }
 
 impl SessionMetrics {
@@ -364,6 +380,7 @@ pub fn parse_claude_str(raw: &str, id_seed: &str, is_sub_file: bool) -> SessionM
         session_id: anonymize_id(id_seed),
         agent: "claude".into(),
         is_sidechain: is_sub_file,
+        mtime_secs: 0,
         turns: Vec::new(),
         observations: Vec::new(),
         duplicate_api_lines_skipped: 0,
@@ -519,6 +536,7 @@ pub fn parse_antigravity_str(raw: &str, id_seed: &str) -> SessionMetrics {
         session_id: anonymize_id(id_seed),
         agent: "antigravity".into(),
         is_sidechain: false,
+        mtime_secs: 0,
         turns: Vec::new(),
         observations: Vec::new(),
         duplicate_api_lines_skipped: 0,
@@ -602,6 +620,7 @@ pub fn parse_codex_str(raw: &str, id_seed: &str) -> SessionMetrics {
         session_id: anonymize_id(id_seed),
         agent: "codex".into(),
         is_sidechain: false,
+        mtime_secs: 0,
         turns: Vec::new(),
         observations: Vec::new(),
         duplicate_api_lines_skipped: 0,
@@ -746,6 +765,7 @@ pub fn parse_gemini_str(raw: &str, id_seed: &str) -> SessionMetrics {
         session_id: anonymize_id(id_seed),
         agent: "gemini".into(),
         is_sidechain: false,
+        mtime_secs: 0,
         turns: Vec::new(),
         observations: Vec::new(),
         duplicate_api_lines_skipped: 0,
@@ -885,31 +905,46 @@ pub fn detect_and_parse(path: &Path, agent: &str) -> Option<SessionMetrics> {
     };
 
     let raw = fs::read_to_string(path).ok()?;
-    match resolved_agent {
+    let mtime_secs = fs::metadata(path)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+
+    let mut parsed = match resolved_agent {
         "claude" => Some(parse_claude_str(&raw, &id_seed, is_sub)),
         "antigravity" => Some(parse_antigravity_str(&raw, &id_seed)),
         "codex" => Some(parse_codex_str(&raw, &id_seed)),
         "gemini" => Some(parse_gemini_str(&raw, &id_seed)),
         _ => {
+            let mut found = None;
             for line in raw.lines().take(5) {
                 let t = line.trim();
                 if t.is_empty() {
                     continue;
                 }
                 if t.contains("\"PLANNER_RESPONSE\"") || t.contains("\"USER_INPUT\"") {
-                    return Some(parse_antigravity_str(&raw, &id_seed));
+                    found = Some(parse_antigravity_str(&raw, &id_seed));
+                    break;
                 }
                 if t.contains("\"event_msg\"")
                     || t.contains("\"turn_context\"")
                     || t.contains("\"token_count\"")
                 {
-                    return Some(parse_codex_str(&raw, &id_seed));
+                    found = Some(parse_codex_str(&raw, &id_seed));
+                    break;
                 }
-                return Some(parse_claude_str(&raw, &id_seed, is_sub));
+                found = Some(parse_claude_str(&raw, &id_seed, is_sub));
+                break;
             }
-            None
+            found
         }
+    };
+    if let Some(ref mut s) = parsed {
+        s.mtime_secs = mtime_secs;
     }
+    parsed
 }
 
 fn collect_transcript_files(root: &Path, known_agent: Option<&str>, out: &mut Vec<(PathBuf, String)>) {
@@ -1012,6 +1047,32 @@ pub struct AgentBreakdown {
 }
 
 #[derive(Debug, Default, Serialize)]
+pub struct DailyBucket {
+    pub date: String,
+    pub sessions: usize,
+    pub turns: usize,
+    pub raw_tokens: u64,
+    pub cache_read: u64,
+    pub total_input: u64,
+    pub estimated_usd: f64,
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct ModelBreakdown {
+    pub turns: usize,
+    pub raw_tokens: u64,
+    pub cost_weighted: f64,
+    pub estimated_usd: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AdvisorTip {
+    pub severity: String, // "high", "medium", "good"
+    pub title: String,
+    pub detail: String,
+}
+
+#[derive(Debug, Default, Serialize)]
 pub struct CorpusSummary {
     pub total_files: usize,
     pub parent_sessions: usize,
@@ -1030,6 +1091,8 @@ pub struct CorpusSummary {
     pub subagent_cost_weighted: f64,
     pub total_estimated_usd: f64,
     pub by_agent: BTreeMap<String, AgentBreakdown>,
+    pub by_model: BTreeMap<String, ModelBreakdown>,
+    pub by_day: BTreeMap<String, DailyBucket>,
     pub calls_by_cat: BTreeMap<String, usize>,
     pub first_tok_by_cat: BTreeMap<String, u64>,
     pub resent_tok_by_cat: BTreeMap<String, u64>,
@@ -1108,6 +1171,28 @@ pub fn summarize_corpus(sessions: &[SessionMetrics]) -> CorpusSummary {
         ab.cost_weighted += cw;
         ab.estimated_usd += usd;
 
+        if sess.mtime_secs > 0 {
+            let date = unix_secs_to_date(sess.mtime_secs);
+            let db = s.by_day.entry(date.clone()).or_insert_with(|| DailyBucket {
+                date,
+                ..Default::default()
+            });
+            db.sessions += 1;
+            db.turns += t_count;
+            db.raw_tokens += sess.total_input() + sess.output();
+            db.cache_read += sess.cache_read();
+            db.total_input += sess.total_input();
+            db.estimated_usd += usd;
+        }
+
+        for turn in &sess.turns {
+            let mb = s.by_model.entry(turn.model.clone()).or_default();
+            mb.turns += 1;
+            mb.raw_tokens += turn.total_input() + turn.output;
+            mb.cost_weighted += turn.cost_weighted(&sess.agent);
+            mb.estimated_usd += turn.estimated_usd(&sess.agent);
+        }
+
         for obs in &sess.observations {
             let rem = t_count.saturating_sub(obs.turn_index).max(1) as u64;
             let resent = obs.tokens * rem;
@@ -1151,28 +1236,168 @@ pub fn load_sessions(path_opt: Option<&Path>, agent: &str) -> Vec<SessionMetrics
         .collect()
 }
 
-/// Fast recent-session loader for `eai init` baseline snapshots (sorts by mtime descending and caps at `max_files`).
-pub fn load_recent_sessions(agent: &str, max_files: usize) -> Vec<SessionMetrics> {
+/// Load sessions filtered by optional age window (`since_days`) and optional cap (`max_files`).
+/// Sorted newest-first so `--since 14d` or dashboard refreshes stay snappy even with thousands of sessions.
+pub fn load_sessions_window(
+    path_opt: Option<&Path>,
+    agent: &str,
+    since_days: Option<u64>,
+    max_files: Option<usize>,
+) -> Vec<SessionMetrics> {
+    let mut files: Vec<(PathBuf, String)> = Vec::new();
+    if let Some(p) = path_opt {
+        let known = if agent == "auto" { None } else { Some(agent) };
+        collect_transcript_files(p, known, &mut files);
+    } else {
+        for (r, ag) in discover_default_roots(agent) {
+            collect_transcript_files(&r, Some(ag), &mut files);
+        }
+    }
+
+    let cutoff = since_days.map(|days| {
+        crate::telemetry::now_unix_secs().saturating_sub(days.saturating_mul(86_400))
+    });
+
+    let mut with_mtime: Vec<(u64, PathBuf, String)> = files
+        .into_iter()
+        .filter_map(|(p, ag)| {
+            let mt = fs::metadata(&p)
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            if let Some(c) = cutoff {
+                if mt < c {
+                    return None;
+                }
+            }
+            Some((mt, p, ag))
+        })
+        .collect();
+
+    with_mtime.sort_by_key(|a| std::cmp::Reverse(a.0));
+    let iter = with_mtime.into_iter();
+    let sliced: Vec<_> = match max_files {
+        Some(lim) => iter.take(lim).collect(),
+        None => iter.collect(),
+    };
+
+    sliced
+        .into_iter()
+        .filter_map(|(_, f, ag)| detect_and_parse(&f, &ag))
+        .filter(|s| s.turn_count() > 0 || !s.observations.is_empty())
+        .collect()
+}
+
+/// Find the single most recently modified transcript file across all detected agents (for `eai watch`).
+pub fn newest_transcript_file(agent: &str) -> Option<(PathBuf, String, u64)> {
     let mut files: Vec<(PathBuf, String)> = Vec::new();
     for (r, ag) in discover_default_roots(agent) {
         collect_transcript_files(&r, Some(ag), &mut files);
     }
-    let mut with_mtime: Vec<(std::time::SystemTime, PathBuf, String)> = files
+    files
         .into_iter()
-        .map(|(p, ag)| {
+        .filter_map(|(p, ag)| {
             let mt = fs::metadata(&p)
                 .and_then(|m| m.modified())
-                .unwrap_or(std::time::UNIX_EPOCH);
-            (mt, p, ag)
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs())?;
+            Some((p, ag, mt))
         })
-        .collect();
-    with_mtime.sort_by_key(|a| std::cmp::Reverse(a.0));
-    with_mtime
-        .into_iter()
-        .take(max_files)
-        .filter_map(|(_, f, ag)| detect_and_parse(&f, &ag))
-        .filter(|s| s.turn_count() > 0 || !s.observations.is_empty())
-        .collect()
+        .max_by_key(|x| x.2)
+}
+
+/// Compute concrete, data-driven optimization tips from session corpus + static prefix audit.
+pub fn compute_advisor_tips(
+    summary: &CorpusSummary,
+    prefix_tokens: usize,
+    recovery_rate_pct: f64,
+) -> Vec<AdvisorTip> {
+    let mut tips = Vec::new();
+    let total_reads = summary.read_full_count + summary.read_ranged_count;
+    if total_reads >= 5 {
+        let full_pct = 100.0 * (summary.read_full_count as f64) / (total_reads as f64);
+        if full_pct > 45.0 {
+            tips.push(AdvisorTip {
+                severity: "high".into(),
+                title: format!("Whole-file reads are {:.0}% of all Read calls", full_pct),
+                detail: "Use `eai outline <file>` before full reads or set `read_mode = \"outline-first\"` in `.eai/config.toml` to cut read tokens by ~40-50%.".into(),
+            });
+        } else {
+            tips.push(AdvisorTip {
+                severity: "good".into(),
+                title: format!("Strong read discipline ({:.0}% ranged reads)", 100.0 - full_pct),
+                detail: "Targeted ranged reads and symbol outlines are keeping context lean.".into(),
+            });
+        }
+    }
+
+    if prefix_tokens > 2500 {
+        let cost_50 = ((prefix_tokens as f64) * 6.15) as usize;
+        tips.push(AdvisorTip {
+            severity: "high".into(),
+            title: format!("High idle static prefix ({} tok/turn)", prefix_tokens),
+            detail: format!(
+                "Paid on every turn (~{} cost-weighted tok per 50-turn session). Run `eai audit . --include-user` to trim bloated skills or MCP configs.",
+                cost_50
+            ),
+        });
+    } else if prefix_tokens > 0 {
+        tips.push(AdvisorTip {
+            severity: "good".into(),
+            title: format!("Lean static prefix ({} tok/turn)", prefix_tokens),
+            detail: "Well below the 2,500 tok/turn ceiling — minimal per-turn tax.".into(),
+        });
+    }
+
+    if summary.total_turns() >= 10 {
+        let chr = summary.cache_hit_rate() * 100.0;
+        if chr < 90.0 {
+            tips.push(AdvisorTip {
+                severity: "high".into(),
+                title: format!("Prompt-cache hit rate is low ({:.1}%)", chr),
+                detail: "Check for dynamic timestamps in system prompts, mid-session tool list mutations, or per-turn history pruning (see Exp 007).".into(),
+            });
+        } else {
+            tips.push(AdvisorTip {
+                severity: "good".into(),
+                title: format!("Healthy prompt-cache hit rate ({:.1}%)", chr),
+                detail: "Prefix stability is preserving 0.1x-0.25x cached input pricing.".into(),
+            });
+        }
+    }
+
+    if summary.total_cost_weighted > 0.0 {
+        let sub_pct = 100.0 * summary.subagent_cost_weighted / summary.total_cost_weighted;
+        if sub_pct > 25.0 {
+            tips.push(AdvisorTip {
+                severity: "medium".into(),
+                title: format!("Sub-agents account for {:.1}% of total spend", sub_pct),
+                detail: "Keep sub-agent return summaries terse; returned summaries are re-sent ~233x in parent orchestrator sessions.".into(),
+            });
+        }
+    }
+
+    if recovery_rate_pct > 5.0 {
+        tips.push(AdvisorTip {
+            severity: "medium".into(),
+            title: format!("Elevated squeeze recovery rate ({:.1}%)", recovery_rate_pct),
+            detail: "Agents are frequently opening `.eai/logs/`. Consider raising `--max-lines 200` for noisy commands.".into(),
+        });
+    }
+
+    tips
+}
+
+/// Parse `--since 14d` or `--since 30` into days.
+pub fn parse_since_days(spec: &str) -> Option<u64> {
+    spec.trim().trim_end_matches(['d', 'D']).parse().ok()
+}
+
+pub fn load_recent_sessions(agent: &str, max_files: usize) -> Vec<SessionMetrics> {
+    load_sessions_window(None, agent, None, Some(max_files))
 }
 
 fn fmt_u64(n: u64) -> String {
@@ -1292,6 +1517,7 @@ pub fn format_analyze_markdown(s: &CorpusSummary) -> String {
 pub fn cmd_analyze(args: &[String]) -> i32 {
     let mut path_arg: Option<PathBuf> = None;
     let mut agent = "auto".to_string();
+    let mut since_days: Option<u64> = None;
     let mut json_out = false;
 
     let mut i = 0;
@@ -1301,10 +1527,14 @@ pub fn cmd_analyze(args: &[String]) -> i32 {
                 agent = args[i + 1].clone();
                 i += 1;
             }
+            "--since" if i + 1 < args.len() => {
+                since_days = parse_since_days(&args[i + 1]);
+                i += 1;
+            }
             "--json" => json_out = true,
             "-h" | "--help" => {
                 println!(
-                    "Usage: eai analyze [path] [--agent auto|claude|antigravity|codex|gemini] [--json]\n\
+                    "Usage: eai analyze [path] [--agent auto|claude|antigravity|codex|gemini] [--since 14d] [--json]\n\
                      Auto-discovers Claude Code, Antigravity, Codex CLI, and Gemini CLI transcripts when [path] is omitted."
                 );
                 return 0;
@@ -1322,7 +1552,7 @@ pub fn cmd_analyze(args: &[String]) -> i32 {
         }
     }
 
-    let sessions = load_sessions(path_arg.as_deref(), &agent);
+    let sessions = load_sessions_window(path_arg.as_deref(), &agent, since_days, None);
     let summary = summarize_corpus(&sessions);
 
     if json_out {

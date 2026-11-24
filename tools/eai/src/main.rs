@@ -1,6 +1,8 @@
 //! `eai` — Unified zero-dependency CLI for efficient-ai.
 
+mod dashboard;
 mod hooks;
+mod impact;
 mod mcp;
 mod setup;
 mod telemetry;
@@ -12,21 +14,29 @@ use std::process::ExitCode;
 
 fn print_help() {
     println!(
-        "eai {} — Same quality, fewer tokens (Claude Code, Antigravity, Gemini CLI, Codex)\n\
+        "eai {} — Same quality, fewer tokens (Claude Code, Antigravity, Gemini CLI, Codex, Cursor)\n\
          \n\
-         USAGE:\n\
-         \x20 eai init [--project <dir>] [--global] [--agents auto|claude,antigravity,gemini,codex]\n\
+         SETUP & HEALTH:\n\
+         \x20 eai init [--project <dir>] [--global] [--mcp] [--agents auto|...]\n\
          \x20 eai doctor [--project <dir>]                     Verify hooks, shims, latency & prefix health\n\
-         \x20 eai analyze [path] [--agent auto] [--json]       Multi-agent token, cache & USD cost profiler\n\
+         \x20 eai uninstall [--project <dir>] [--global]       Cleanly remove efficient-ai hooks & shims\n\
+         \n\
+         MONITORING & IMPACT PROOF:\n\
+         \x20 eai impact [--project <dir>] [--since 30d]       Before vs. After project impact & advisor report\n\
+         \x20 eai dashboard [--port 7420] [--since 30d]        Launch local offline web UI (127.0.0.1:7420)\n\
+         \x20 eai watch [--project <dir>] [--once]             Live terminal watcher with cache-bust alerts\n\
+         \x20 eai share [--out eai-efficiency-card.svg]        Generate privacy-safe SVG efficiency proof card\n\
+         \x20 eai stats [--project <dir>] [--global] [--json]  Local savings, recovery rate & baseline metrics\n\
+         \x20 eai analyze [path] [--agent auto] [--since 14d]  Multi-agent token, cache & USD cost profiler\n\
          \x20 eai audit [path] [--include-user] [--json]       Audit static prefix (AGENTS.md, skills, MCP)\n\
-         \x20 eai stats [--project <dir>] [--global] [--json]  Local savings, recovery rate & baseline report\n\
-         \x20 eai outline <file|search> [...]                  Structure-aware outlines & symbol reads\n\
-         \x20 eai squeeze [--max-lines N] -- <cmd> [args...]   Lossless compression, spill log & loop guard\n\
-         \x20 eai hook <claude|antigravity|gemini>             Sub-10ms native agent hook router (stdin JSON)\n\
-         \x20 eai mcp                                          Ultra-lean stdio MCP server (<280 idle tokens)\n\
-         \x20 eai sanitize [path] --out <file.json>            Export privacy-safe aggregate session JSON\n\
-         \x20 eai selftest                                     Verify all 4 agent parsers on synthetic fixtures\n\
-         \x20 eai uninstall [--project <dir>] [--global]       Cleanly remove efficient-ai hooks & shims",
+         \n\
+         CORE TOOLS & INTEGRATIONS:\n\
+         \x20 eai outline <file|dir>... [--symbol S] [--budget N]  Tree-sitter outlines & symbol reads\n\
+         \x20 eai squeeze [--max-lines N] -- <cmd> [args...]       Lossless compression, spill log & loop guard\n\
+         \x20 eai hook <claude|antigravity|gemini>                 Sub-10ms native agent hook router (stdin JSON)\n\
+         \x20 eai mcp                                              Ultra-lean stdio MCP server (<280 idle tokens)\n\
+         \x20 eai sanitize [path] --out <file.json>                Export privacy-safe aggregate session JSON\n\
+         \x20 eai selftest                                         Verify all 4 agent parsers on synthetic fixtures",
         env!("CARGO_PKG_VERSION")
     );
 }
@@ -78,6 +88,10 @@ fn main() -> ExitCode {
         "init" | "setup" => ExitCode::from(setup::cmd_init(rest) as u8),
         "doctor" => ExitCode::from(setup::cmd_doctor(rest) as u8),
         "stats" => ExitCode::from(telemetry::cmd_stats(rest) as u8),
+        "impact" => ExitCode::from(impact::cmd_impact(rest) as u8),
+        "share" => ExitCode::from(impact::cmd_share(rest) as u8),
+        "watch" => ExitCode::from(impact::cmd_watch(rest) as u8),
+        "dashboard" => ExitCode::from(dashboard::cmd_dashboard(rest) as u8),
         "uninstall" => ExitCode::from(setup::cmd_uninstall(rest) as u8),
         other => {
             eprintln!("Unknown command '{}'. Run `eai --help` for usage.", other);

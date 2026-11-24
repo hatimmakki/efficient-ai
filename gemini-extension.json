@@ -1,6 +1,6 @@
 {
   "name": "efficient-ai",
   "description": "Same quality, fewer tokens: unified eai binary with multi-agent session profiler, outline structure-aware reader, squeeze lossless output compressor, and BeforeTool/AfterTool hooks.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "contextFileName": "GEMINI.md"
 }
