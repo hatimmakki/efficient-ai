@@ -109,6 +109,17 @@ class TestHooksAndManifests(unittest.TestCase):
         r_md = (REPO_ROOT / "rules" / "AGENTS.md").read_text(encoding="utf-8").strip()
         self.assertEqual(p_md, r_md)
 
+        # Verify all 5 plugin manifests + npm launcher stay version-synced
+        versions = {
+            json.loads((REPO_ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))["version"],
+            json.loads((REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))["plugins"][0]["version"],
+            json.loads((REPO_ROOT / ".antigravity-plugin" / "plugin.json").read_text(encoding="utf-8"))["version"],
+            json.loads((REPO_ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))["version"],
+            json.loads((REPO_ROOT / "gemini-extension.json").read_text(encoding="utf-8"))["version"],
+            json.loads((REPO_ROOT / "packages" / "cli" / "package.json").read_text(encoding="utf-8"))["version"],
+        }
+        self.assertEqual(len(versions), 1, f"Plugin manifests have mismatched versions: {versions}")
+
     def test_hook_adapters_python_fallback(self) -> None:
         env = dict(os.environ, EAI_FORCE_PY_HOOK="1")
         hook_script = str(REPO_ROOT / "hooks" / "eai_hook.py")

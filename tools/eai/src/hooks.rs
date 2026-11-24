@@ -151,6 +151,18 @@ fn read_mode(cwd: &Path) -> String {
     "gentle".to_string()
 }
 
+fn is_paused(cwd: &Path) -> bool {
+    if cwd.join(".eai").join("paused").is_file() {
+        return true;
+    }
+    if let Some(h) = crate::telemetry::user_home() {
+        if h.join(".eai").join("paused").is_file() {
+            return true;
+        }
+    }
+    false
+}
+
 /// Handle Claude Code PreToolUse JSON payload.
 pub fn handle_claude_payload(payload: &Value, eai_exe: &Path) -> Option<Value> {
     let tool_name = payload.get("tool_name").and_then(|v| v.as_str()).unwrap_or("");
@@ -160,6 +172,10 @@ pub fn handle_claude_payload(payload: &Value, eai_exe: &Path) -> Option<Value> {
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+
+    if is_paused(&cwd) {
+        return None;
+    }
 
     if matches!(tool_name, "Bash" | "PowerShell") {
         let orig_cmd = tool_input.get("command").and_then(|v| v.as_str()).unwrap_or("");
@@ -253,6 +269,14 @@ pub fn handle_antigravity_payload(payload: &Value, eai_exe: &Path) -> Value {
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+
+    if is_paused(&cwd) {
+        return match event {
+            "PreToolUse" | "Stop" => json!({"decision": "allow"}),
+            "PreInvocation" | "PostInvocation" => json!({"injectSteps": []}),
+            _ => json!({}),
+        };
+    }
 
     match event {
         "PreToolUse" => {
@@ -371,6 +395,10 @@ pub fn handle_gemini_payload(payload: &Value, eai_exe: &Path) -> Value {
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+
+    if is_paused(&cwd) {
+        return json!({"decision": "allow"});
+    }
 
     // AfterTool lossless compression for noisy shell outputs (Gemini CLI superpower!)
     if event == "AfterTool" || payload.get("tool_response").is_some() {

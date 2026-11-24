@@ -4,6 +4,7 @@ mod dashboard;
 mod hooks;
 mod impact;
 mod mcp;
+mod proxy;
 mod setup;
 mod telemetry;
 mod tokscope;
@@ -19,6 +20,7 @@ fn print_help() {
          SETUP & HEALTH:\n\
          \x20 eai init [--project <dir>] [--global] [--mcp] [--agents auto|...]\n\
          \x20 eai doctor [--project <dir>]                     Verify hooks, shims, latency & prefix health\n\
+         \x20 eai pause / eai resume [--project <dir>]         Temporarily pause or resume hook rewriting\n\
          \x20 eai uninstall [--project <dir>] [--global]       Cleanly remove efficient-ai hooks & shims\n\
          \n\
          MONITORING & IMPACT PROOF:\n\
@@ -28,11 +30,12 @@ fn print_help() {
          \x20 eai share [--out eai-efficiency-card.svg]        Generate privacy-safe SVG efficiency proof card\n\
          \x20 eai stats [--project <dir>] [--global] [--json]  Local savings, recovery rate & baseline metrics\n\
          \x20 eai analyze [path] [--agent auto] [--since 14d]  Multi-agent token, cache & USD cost profiler\n\
-         \x20 eai audit [path] [--include-user] [--json]       Audit static prefix (AGENTS.md, skills, MCP)\n\
+         \x20 eai audit [path] [--include-user] [--fix]        Audit & auto-minify static prefix configs\n\
          \n\
          CORE TOOLS & INTEGRATIONS:\n\
          \x20 eai outline <file|dir>... [--symbol S] [--budget N]  Tree-sitter outlines & symbol reads\n\
          \x20 eai squeeze [--max-lines N] -- <cmd> [args...]       Lossless compression, spill log & loop guard\n\
+         \x20 eai proxy [--port 7421] [--simulate <file>]          Exp 007 cache-aware batch masking proxy\n\
          \x20 eai hook <claude|antigravity|gemini>                 Sub-10ms native agent hook router (stdin JSON)\n\
          \x20 eai mcp                                              Ultra-lean stdio MCP server (<280 idle tokens)\n\
          \x20 eai sanitize [path] --out <file.json>                Export privacy-safe aggregate session JSON\n\
@@ -81,6 +84,9 @@ fn main() -> ExitCode {
         }
         "hook" => ExitCode::from(hooks::cmd_hook(rest) as u8),
         "mcp" => ExitCode::from(mcp::cmd_mcp(rest) as u8),
+        "proxy" => ExitCode::from(proxy::cmd_proxy(rest) as u8),
+        "pause" => ExitCode::from(setup::cmd_pause(rest, true) as u8),
+        "resume" => ExitCode::from(setup::cmd_pause(rest, false) as u8),
         "analyze" => ExitCode::from(tokscope::cmd_analyze(rest) as u8),
         "audit" => ExitCode::from(tokscope::cmd_audit(rest) as u8),
         "sanitize" => ExitCode::from(tokscope::cmd_sanitize(rest) as u8),

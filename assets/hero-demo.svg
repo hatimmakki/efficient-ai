@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="100%" font-family="'JetBrains Mono', 'Cascadia Code', Consolas, monospace">
+  <defs>
+    <radialGradient id="heroGlow" cx="50%" cy="0%" r="72%">
+      <stop offset="0%" stop-color="#625DF5" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#F6F7FB" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="termBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E1E38"/>
+      <stop offset="100%" stop-color="#16162B"/>
+    </linearGradient>
+    <linearGradient id="pillGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5B54FA"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <filter id="elev" x="-5%" y="-5%" width="110%" height="114%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#151531" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <rect width="960" height="470" rx="22" fill="#F6F7FB"/>
+  <rect width="960" height="470" rx="22" fill="url(#heroGlow)"/>
+
+  <!-- Terminal Window -->
+  <g filter="url(#elev)">
+    <rect x="28" y="24" width="590" height="422" rx="16" fill="#131326"/>
+    <rect x="28" y="24" width="590" height="38" rx="16" fill="url(#termBar)"/>
+    <rect x="28" y="48" width="590" height="14" fill="url(#termBar)"/>
+    <circle cx="50" cy="43" r="5.5" fill="#F43F5E"/>
+    <circle cx="68" cy="43" r="5.5" fill="#F59E0B"/>
+    <circle cx="86" cy="43" r="5.5" fill="#10B981"/>
+    <text x="323" y="47" font-size="11.5" fill="#94A3B8" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600">eai v1.0.0 — 10-Second Multi-Agent Setup &amp; Proof</text>
+
+    <!-- Command 1 -->
+    <text x="48" y="88" font-size="12.5" fill="#8B5CF6" font-weight="700">$</text>
+    <text x="64" y="88" font-size="12.5" fill="#F8FAFC" font-weight="600">eai init</text>
+    <text x="148" y="88" font-size="11.5" fill="#64748B"># auto-detects Claude, Antigravity, Gemini, Codex, Cursor</text>
+
+    <text x="48" y="112" font-size="11.5" fill="#10B981">[OK]</text>
+    <text x="86" y="112" font-size="11.5" fill="#CBD5E1">AGENTS.md (227 tok) + CLAUDE.md + GEMINI.md shims</text>
+    <text x="48" y="131" font-size="11.5" fill="#10B981">[OK]</text>
+    <text x="86" y="131" font-size="11.5" fill="#CBD5E1">Sub-10ms Rust hooks wired (7.9 ms wall · 38 µs core)</text>
+    <text x="48" y="150" font-size="11.5" fill="#10B981">[OK]</text>
+    <text x="86" y="150" font-size="11.5" fill="#CBD5E1">6 executable PATH shims + Pre-EAI baseline captured (670 ms)</text>
+
+    <!-- Command 2 -->
+    <text x="48" y="186" font-size="12.5" fill="#8B5CF6" font-weight="700">$</text>
+    <text x="64" y="186" font-size="12.5" fill="#F8FAFC" font-weight="600">eai impact --since 14d</text>
+
+    <text x="48" y="210" font-size="11.5" fill="#94A3B8">Metric                      Before EAI    With EAI      Delta</text>
+    <line x1="48" y1="218" x2="594" y2="218" stroke="#28284A" stroke-width="1"/>
+    <text x="48" y="238" font-size="11.5" fill="#E2E8F0">Avg cost / session (USD)        $1.84       $1.22</text>
+    <text x="518" y="238" font-size="11.5" fill="#10B981" font-weight="700">-33.7%</text>
+    <text x="48" y="258" font-size="11.5" fill="#E2E8F0">Whole-file Read ratio           72.0%       24.1%</text>
+    <text x="518" y="258" font-size="11.5" fill="#10B981" font-weight="700">-47.9 pp</text>
+    <text x="48" y="278" font-size="11.5" fill="#E2E8F0">Prompt-cache hit rate           93.4%       97.6%</text>
+    <text x="518" y="278" font-size="11.5" fill="#10B981" font-weight="700">+4.2 pp</text>
+    <text x="48" y="298" font-size="11.5" fill="#E2E8F0">Idle static prefix / turn       8,920         227</text>
+    <text x="518" y="298" font-size="11.5" fill="#10B981" font-weight="700">-97.5%</text>
+    <text x="48" y="318" font-size="11.5" fill="#E2E8F0">Squeeze recovery rate               —        0.0%</text>
+    <text x="518" y="318" font-size="11.5" fill="#38BDF8" font-weight="700">0 loops</text>
+
+    <!-- Command 3 -->
+    <text x="48" y="356" font-size="12.5" fill="#8B5CF6" font-weight="700">$</text>
+    <text x="64" y="356" font-size="12.5" fill="#F8FAFC" font-weight="600">eai dashboard</text>
+    <text x="190" y="356" font-size="11.5" fill="#64748B"># 100% offline local web monitor</text>
+    <text x="48" y="378" font-size="11.5" fill="#A5B4FC">efficient-ai Local Dashboard running at http://127.0.0.1:7420</text>
+
+    <!-- Command 4 -->
+    <text x="48" y="408" font-size="12.5" fill="#8B5CF6" font-weight="700">$</text>
+    <text x="64" y="408" font-size="12.5" fill="#F8FAFC" font-weight="600">eai proxy --provider anthropic</text>
+    <text x="318" y="408" font-size="11.5" fill="#10B981"># Exp 007 Batch Mask K=12, M=6</text>
+    <text x="48" y="428" font-size="11.5" fill="#94A3B8">ANTHROPIC_BASE_URL=http://127.0.0.1:7421 · Cache-bust alerts ON</text>
+  </g>
+
+  <!-- Right Side: Dashboard Proof Preview Cards -->
+  <g filter="url(#elev)" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif">
+    <rect x="642" y="24" width="290" height="196" rx="16" fill="#FFFFFF" stroke="#E2E5F1"/>
+    <rect x="660" y="42" width="128" height="22" rx="11" fill="url(#pillGrad)"/>
+    <text x="724" y="57" font-size="10.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">LOCAL DASHBOARD</text>
+    <text x="660" y="92" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="0.5">BILLED COST SAVED (315 SESS)</text>
+    <text x="660" y="128" font-size="30" font-weight="800" fill="#5B54FA">-27% to -38%</text>
+    <text x="660" y="150" font-size="12" fill="#10B981" font-weight="600">Claude · Antigravity · Gemini · Codex</text>
+
+    <!-- Mini bars -->
+    <rect x="660" y="168" width="254" height="8" rx="4" fill="#EEF0FA"/>
+    <rect x="660" y="168" width="234" height="8" rx="4" fill="#5B54FA"/>
+    <text x="660" y="196" font-size="11" fill="#5E6478">97.6% cache hit · 248 tok MCP · 0 recovery loops</text>
+  </g>
+
+  <g filter="url(#elev)" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif">
+    <rect x="642" y="238" width="290" height="208" rx="16" fill="#FFFFFF" stroke="#E2E5F1"/>
+    <text x="660" y="266" font-size="13" font-weight="800" fill="#151531">Works Everywhere</text>
+
+    <rect x="660" y="280" width="122" height="30" rx="8" fill="#F6F7FB" stroke="#E2E5F1"/>
+    <text x="721" y="299" font-size="11.5" font-weight="700" fill="#151531" text-anchor="middle">Claude Code</text>
+    <rect x="792" y="280" width="122" height="30" rx="8" fill="#EEF0FF" stroke="#C7D2FE"/>
+    <text x="853" y="299" font-size="11.5" font-weight="700" fill="#5B54FA" text-anchor="middle">Antigravity</text>
+
+    <rect x="660" y="318" width="122" height="30" rx="8" fill="#F6F7FB" stroke="#E2E5F1"/>
+    <text x="721" y="337" font-size="11.5" font-weight="700" fill="#151531" text-anchor="middle">Gemini CLI</text>
+    <rect x="792" y="318" width="122" height="30" rx="8" fill="#F6F7FB" stroke="#E2E5F1"/>
+    <text x="853" y="337" font-size="11.5" font-weight="700" fill="#151531" text-anchor="middle">Codex CLI</text>
+
+    <rect x="660" y="356" width="254" height="30" rx="8" fill="#ECFDF5" stroke="#A7F3D0"/>
+    <text x="787" y="375" font-size="11.5" font-weight="700" fill="#059669" text-anchor="middle">Cursor · Windsurf · Cline · OpenCode (MCP)</text>
+
+    <text x="660" y="410" font-size="11.5" fill="#5E6478">1 single zero-dep Rust binary (<tspan font-weight="700" fill="#151531">eai</tspan>)</text>
+    <text x="660" y="428" font-size="11.5" fill="#5E6478">100% local · Apache-2.0 · Proof-backed</text>
+  </g>
+</svg>

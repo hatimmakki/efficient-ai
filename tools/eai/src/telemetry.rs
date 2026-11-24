@@ -210,6 +210,9 @@ pub struct StatsSummary {
     pub squeeze_lines_elided: usize,
     pub squeeze_spilled_logs: usize,
     pub hook_rewrites: usize,
+    pub proxy_masks: usize,
+    pub proxy_tokens_saved: usize,
+    pub cache_busts: usize,
     pub loops_intercepted: usize,
     pub recoveries: usize,
     pub recovery_rate_pct: f64,
@@ -243,13 +246,20 @@ pub fn summarize_events(scope: &str, events: &[MetricEvent]) -> StatsSummary {
             "hook_rewrite" => {
                 s.hook_rewrites += 1;
             }
+            "proxy_mask" => {
+                s.proxy_masks += 1;
+                s.proxy_tokens_saved += ev.saved_tokens_est;
+            }
+            "cache_bust" => {
+                s.cache_busts += 1;
+            }
             "recovery" => {
                 s.recoveries += 1;
             }
             _ => {}
         }
     }
-    s.total_tokens_saved = s.outline_tokens_saved + s.squeeze_tokens_saved;
+    s.total_tokens_saved = s.outline_tokens_saved + s.squeeze_tokens_saved + s.proxy_tokens_saved;
     // Using Exp 003 median history amplification (~54x average across multi-turn sessions; conservative 25x estimate)
     s.estimated_resent_tokens_avoided = s.total_tokens_saved * 25;
     s.recovery_rate_pct = if s.squeeze_spilled_logs > 0 {
@@ -330,6 +340,12 @@ pub fn cmd_stats(args: &[String]) -> i32 {
             summary.squeeze_calls, summary.squeeze_tokens_saved, summary.squeeze_lines_elided
         );
         println!("| Hook compact-flag rewrites | {} |", summary.hook_rewrites);
+        if summary.proxy_masks > 0 || summary.cache_busts > 0 {
+            println!(
+                "| `proxy` batch masks / cache-bust alerts | {} batches (**{}** tok saved) / {} alerts |",
+                summary.proxy_masks, summary.proxy_tokens_saved, summary.cache_busts
+            );
+        }
         println!(
             "| **Total direct tokens saved** | **{}** tok (~{} re-sent tok avoided @ 25x) |",
             summary.total_tokens_saved, summary.estimated_resent_tokens_avoided

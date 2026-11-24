@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>efficient-ai — Same Quality, Fewer Tokens for AI Coding Agents</title>
+<meta name="description" content="Single zero-dependency Rust CLI (eai) cutting AI coding agent token & API cost by 27-38% with zero quality loss across Claude Code, Antigravity, Gemini CLI, Codex CLI, and Cursor." />
+<style>
+  :root {
+    --bg: #F6F7FB;
+    --card: #FFFFFF;
+    --ink: #151531;
+    --muted: #5E6478;
+    --border: #E4E7F2;
+    --accent: #5B54FA;
+    --accent-2: #8B5CF6;
+    --green: #10B981;
+    --green-soft: #ECFDF5;
+    --red: #F43F5E;
+    --red-soft: #FFF1F2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(circle at 50% 0%, rgba(98,93,245,0.16), transparent 46%), var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0; border-bottom: 1px solid rgba(228,231,242,0.7);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; text-decoration: none; color: var(--ink); }
+  .logo-bar { width: 9px; height: 28px; border-radius: 5px; background: linear-gradient(180deg,var(--accent),var(--accent-2)); }
+  .nav-links { display: flex; gap: 22px; align-items: center; font-size: 14px; font-weight: 600; }
+  .nav-links a { color: var(--muted); text-decoration: none; }
+  .nav-links a:hover { color: var(--accent); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px;
+    font-size: 14px; font-weight: 700; text-decoration: none; border: 1px solid var(--border);
+    background: var(--card); color: var(--ink); cursor: pointer;
+  }
+  .btn-primary { background: linear-gradient(90deg,var(--accent),var(--accent-2)); color: #fff; border: none; }
+  .hero { text-align: center; padding: 54px 0 36px; }
+  .badge {
+    display: inline-block; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 700;
+    background: #EEF0FF; color: var(--accent); margin-bottom: 16px;
+  }
+  h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 900; letter-spacing: -0.03em; margin: 0 0 14px; line-height: 1.08; }
+  .hero p { max-width: 720px; margin: 0 auto 28px; font-size: 17px; color: var(--muted); }
+  .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 12px; }
+  .tab {
+    padding: 7px 13px; border-radius: 9px; border: 1px solid var(--border); background: var(--card);
+    font-size: 12.5px; font-weight: 700; color: var(--muted); cursor: pointer;
+  }
+  .tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .cmd-box {
+    max-width: 760px; margin: 0 auto 30px; background: #131326; color: #F8FAFC; border-radius: 14px;
+    padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; text-align: left;
+    box-shadow: 0 12px 28px rgba(21,21,49,0.12);
+  }
+  .cmd-box code { overflow-x: auto; white-space: nowrap; }
+  .copy-btn {
+    background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.16);
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+  }
+  .hero-img { width: 100%; border-radius: 20px; box-shadow: 0 18px 40px rgba(21,21,49,0.08); margin-bottom: 24px; }
+  section { padding: 36px 0; }
+  h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 22px; font-size: 15px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 24px;
+    box-shadow: 0 8px 22px rgba(21,21,49,0.04);
+  }
+  .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+  .slider-row { margin-bottom: 16px; }
+  .slider-row label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .slider-row input[type=range] { width: 100%; accent-color: var(--accent); }
+  select {
+    width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border);
+    font-size: 13.5px; font-weight: 600; background: #fff; color: var(--ink);
+  }
+  .result-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 13px 14px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border);
+  }
+  .result-row.bad { background: var(--red-soft); border-color: #FECDD3; }
+  .result-row.good { background: var(--green-soft); border-color: #A7F3D0; }
+  .result-val { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 8px; border-bottom: 1px solid #F1F3F9; }
+  .pill { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
+  .pill-good { background: var(--green-soft); color: var(--green); }
+  .pill-indigo { background: #EEF0FF; color: var(--accent); }
+  .pill-bad { background: var(--red-soft); color: var(--red); }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  footer { padding: 40px 0 56px; text-align: center; color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav>
+    <a class="logo" href="#"><span class="logo-bar"></span> efficient-ai</a>
+    <div class="nav-links">
+      <a href="#calculator">Cost Calculator</a>
+      <a href="#leaderboard">Leaderboard</a>
+      <a href="#architecture">Architecture</a>
+      <a class="btn btn-primary" href="https://github.com/hatimmakki/efficient-ai">GitHub ★</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <span class="badge">v1.0.0 · Verified on 2,824 Real Sessions (8.23B Tokens)</span>
+    <h1>Same quality, <span style="color:var(--accent)">30–40% fewer tokens.</span></h1>
+    <p>One zero-dependency Rust binary (<code>eai</code>) + native plugins for <strong>Claude Code</strong>, <strong>Antigravity</strong>, <strong>Gemini CLI</strong>, <strong>Codex CLI</strong>, and <strong>Cursor</strong>. Cuts real billed API cost with lossless recovery, tree-sitter outlines, and cache-safe batch masking.</p>
+
+    <div class="tabs" id="install-tabs">
+      <button class="tab active" data-cmd="curl -fsSL https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.sh | sh && eai init">macOS / Linux</button>
+      <button class="tab" data-cmd="irm https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.ps1 | iex; eai init">Windows PowerShell</button>
+      <button class="tab" data-cmd="/plugin marketplace add hatimmakki/efficient-ai && /plugin install efficient-ai@efficient-ai">Claude Code</button>
+      <button class="tab" data-cmd="agy plugin install https://github.com/hatimmakki/efficient-ai">Antigravity</button>
+      <button class="tab" data-cmd="gemini extensions install https://github.com/hatimmakki/efficient-ai">Gemini CLI</button>
+      <button class="tab" data-cmd="codex plugin marketplace add https://github.com/hatimmakki/efficient-ai.git && eai init --agents codex">Codex CLI</button>
+      <button class="tab" data-cmd="eai init --agents cursor">Cursor / MCP</button>
+    </div>
+    <div class="cmd-box">
+      <code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.sh | sh && eai init</code>
+      <button class="copy-btn" id="copy-btn">Copy</button>
+    </div>
+
+    <img class="hero-img" src="assets/hero-demo.svg" onerror="this.src='../assets/hero-demo.svg'" alt="efficient-ai 10-second setup and live impact proof" />
+  </header>
+
+  <section id="calculator">
+    <h2>Interactive Prompt-Cache &amp; Token Cost Calculator</h2>
+    <p class="sub">See why naive per-turn history pruning raises Claude bills by up to +111.8% — and how <code>efficient-ai</code> cuts your real monthly API spend while protecting prompt caches.</p>
+    <div class="card calc-grid">
+      <div>
+        <div class="slider-row">
+          <label><span>Agent / Pricing Model</span></label>
+          <select id="c-agent">
+            <option value="claude">Claude Code (Sonnet · $3/$15 · 0.1× cache read · 1.25× write)</option>
+            <option value="antigravity">Antigravity / Gemini Pro ($1.25/$10 · 0.25× cache read)</option>
+            <option value="codex">Codex CLI / GPT-5 ($1.50/$10 · 0.50× cache read)</option>
+          </select>
+        </div>
+        <div class="slider-row">
+          <label><span>Sessions per Month</span><span id="v-sess">60</span></label>
+          <input id="c-sess" type="range" min="10" max="300" step="10" value="60" />
+        </div>
+        <div class="slider-row">
+          <label><span>Turns per Session (T)</span><span id="v-turns">40</span></label>
+          <input id="c-turns" type="range" min="10" max="100" step="5" value="40" />
+        </div>
+        <div class="slider-row">
+          <label><span>Idle Static Prefix (AGENTS.md + Skills + MCP)</span><span id="v-pref">8,000 tok</span></label>
+          <input id="c-pref" type="range" min="500" max="25000" step="500" value="8000" />
+        </div>
+        <div class="slider-row">
+          <label><span>Avg Tool Observation / Turn</span><span id="v-obs">1,800 tok</span></label>
+          <input id="c-obs" type="range" min="400" max="5000" step="100" value="1800" />
+        </div>
+      </div>
+
+      <div>
+        <div class="result-row">
+          <div><strong>1. Vanilla Baseline</strong><div style="font-size:12px;color:var(--muted)" id="r-base-meta"></div></div>
+          <div class="result-val" id="r-base">$0/mo</div>
+        </div>
+        <div class="result-row bad">
+          <div><strong>2. Naive Per-Turn Pruning (M=6)</strong><div style="font-size:12px;color:var(--red)" id="r-naive-meta"></div></div>
+          <div class="result-val" style="color:var(--red)" id="r-naive">$0/mo</div>
+        </div>
+        <div class="result-row good">
+          <div><strong>3. Full efficient-ai Stack (outline + squeeze + proxy)</strong><div style="font-size:12px;color:#059669" id="r-eai-meta"></div></div>
+          <div class="result-val" style="color:var(--green)" id="r-eai">$0/mo</div>
+        </div>
+        <div style="margin-top:16px;padding:14px;border-radius:12px;background:#EEF0FF;font-size:13.5px;">
+          <strong style="color:var(--accent)" id="r-headline"></strong>
+          <div style="color:var(--muted);margin-top:4px;font-size:12.5px;">Model calibrated directly from Experiments 003–008 (exact LCP cache simulation).</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="leaderboard">
+    <h2>Empirical Technique Leaderboard (Experiments 001–008)</h2>
+    <p class="sub">Every claim is reproducible from <code>experiments/</code> and verified on real multi-turn trajectories.</p>
+    <div class="filter-bar" id="lb-filters">
+      <button class="tab active" data-layer="all">All Layers</button>
+      <button class="tab" data-layer="Reads">Reads</button>
+      <button class="tab" data-layer="History">History</button>
+      <button class="tab" data-layer="Prefix">Static Prefix</button>
+      <button class="tab" data-layer="Streams">Observations</button>
+      <button class="tab" data-layer="Output">Output</button>
+    </div>
+    <div class="card" style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Technique / Tool</th><th>Layer</th><th>Component Impact</th><th>Full-Session / Cost Impact</th><th>Quality Risk</th><th>Proof</th></tr>
+        </thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <h2>4-Layer Lossless Token &amp; Cost Pipeline</h2>
+    <p class="sub">Targets the highest-amplification drivers first — file reads (64%), static prefix, history compaction, and lossless stream spill.</p>
+    <div class="card" style="padding:14px">
+      <img src="assets/architecture-flow.svg" onerror="this.src='../assets/architecture-flow.svg'" style="width:100%;display:block" alt="efficient-ai 4-layer architecture" />
+    </div>
+  </section>
+
+  <footer>
+    <strong>efficient-ai v1.0.0</strong> · Apache-2.0 Open Source · 100% Local &amp; Privacy-First ·
+    <a href="https://github.com/hatimmakki/efficient-ai" style="color:var(--accent);font-weight:700;text-decoration:none">github.com/hatimmakki/efficient-ai</a>
+  </footer>
+</div>
+
+<script>
+const tabs = document.querySelectorAll('#install-tabs .tab');
+const cmdEl = document.getElementById('install-cmd');
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  cmdEl.textContent = t.dataset.cmd;
+}));
+document.getElementById('copy-btn').addEventListener('click', () => {
+  navigator.clipboard?.writeText(cmdEl.textContent);
+  const b = document.getElementById('copy-btn');
+  b.textContent = 'Copied!';
+  setTimeout(() => b.textContent = 'Copy', 1500);
+});
+
+const PROVIDERS = {
+  claude:      { usdM: 3.00, wRead: 0.10, wWrite: 1.25, wOut: 5.0, k: 12 },
+  antigravity: { usdM: 1.25, wRead: 0.25, wWrite: 1.00, wOut: 4.0, k: 10 },
+  codex:       { usdM: 1.50, wRead: 0.50, wWrite: 1.00, wOut: 4.0, k: 8  },
+};
+
+function sim(T, S, obsTok, mode, p) {
+  let prev = [], rawIn = 0, cRead = 0, cWrite = 0;
+  const M = 6, ph = 24;
+  for (let t = 0; t < T; t++) {
+    let cur = [S];
+    let limit = mode === 'baseline' ? 0 : mode === 'naive' ? Math.max(0, t + 1 - M) : Math.floor(Math.max(0, t + 1 - M) / p.k) * p.k;
+    for (let i = 0; i <= t; i++) cur.push(i < limit ? ph : obsTok);
+    let lcp = 0;
+    for (let i = 0; i < Math.min(prev.length, cur.length); i++) {
+      if (prev[i] === cur[i]) lcp += cur[i]; else break;
+    }
+    const tot = cur.reduce((a,b) => a + b, 0);
+    rawIn += tot; cRead += lcp; cWrite += (tot - lcp);
+    prev = cur;
+  }
+  const outTok = T * 260 * (mode === 'eai' ? 0.85 : 1.0);
+  const cw = cRead * p.wRead + cWrite * p.wWrite + outTok * p.wOut;
+  return { rawIn, cacheHit: 100 * cRead / Math.max(1, rawIn), usd: (cw / 1e6) * p.usdM };
+}
+
+function updateCalc() {
+  const p = PROVIDERS[document.getElementById('c-agent').value];
+  const sess = +document.getElementById('c-sess').value;
+  const T = +document.getElementById('c-turns').value;
+  const S = +document.getElementById('c-pref').value;
+  const obs = +document.getElementById('c-obs').value;
+  document.getElementById('v-sess').textContent = sess;
+  document.getElementById('v-turns').textContent = T;
+  document.getElementById('v-pref').textContent = S.toLocaleString() + ' tok';
+  document.getElementById('v-obs').textContent = obs.toLocaleString() + ' tok';
+
+  const base = sim(T, S, obs, 'baseline', p);
+  const naive = sim(T, S, obs, 'naive', p);
+  // eai cuts prefix by ~65% (floor 800) + obs by ~32% (outline + squeeze) + Exp 007 batch masking
+  const eaiS = Math.max(800, Math.round(S * 0.35));
+  const eaiObs = Math.round(obs * 0.68);
+  const eai = sim(T, eaiS, eaiObs, 'eai', p);
+
+  const bMo = base.usd * sess, nMo = naive.usd * sess, eMo = eai.usd * sess;
+  const nDelta = 100 * (nMo - bMo) / Math.max(0.01, bMo);
+  const eDelta = 100 * (eMo - bMo) / Math.max(0.01, bMo);
+
+  document.getElementById('r-base').textContent = `$${bMo.toFixed(0)}/mo`;
+  document.getElementById('r-base-meta').textContent = `${(base.rawIn/1e6).toFixed(2)}M raw tok/sess · ${base.cacheHit.toFixed(1)}% cache hit`;
+  document.getElementById('r-naive').textContent = `$${nMo.toFixed(0)}/mo (${nDelta >= 0 ? '+' : ''}${nDelta.toFixed(0)}%)`;
+  document.getElementById('r-naive-meta').textContent = `Cache drops to ${naive.cacheHit.toFixed(1)}% — cache writes explode!`;
+  document.getElementById('r-eai').textContent = `$${eMo.toFixed(0)}/mo (${eDelta.toFixed(0)}%)`;
+  document.getElementById('r-eai-meta').textContent = `${(eai.rawIn/1e6).toFixed(2)}M raw tok/sess · ${eai.cacheHit.toFixed(1)}% cache hit preserved`;
+  document.getElementById('r-headline').textContent = `Estimated savings: $${Math.max(0, bMo - eMo).toFixed(0)}/month ($${Math.max(0, (bMo - eMo)*12).toFixed(0)}/year) per developer with 0 recovery loops.`;
+}
+['c-agent','c-sess','c-turns','c-pref','c-obs'].forEach(id => document.getElementById(id).addEventListener('input', updateCalc));
+updateCalc();
+
+const LEADERBOARD = [
+  { name: 'eai Full Stack (outline + squeeze + proxy)', layer: 'Reads', comp: '7.9 ms hook · 248 tok MCP · 100% pass', full: '-27.1% to -37.6% billed USD across 4 agents', risk: 'None (lossless)', exp: 'Exp 008', good: true },
+  { name: 'eai outline (tree-sitter AST reader)', layer: 'Reads', comp: '-66% to -96% explore · -57% to -90% combined', full: '-37.9% to -47.2% read tokens (118M avoided)', risk: 'Low (lossless)', exp: 'Exp 005 / 008', good: true },
+  { name: 'eai proxy Cache-Aware Batch Mask (K=12, M=6)', layer: 'History', comp: 'Prefix-stable boundaries · cache-bust alerts', full: '-9.6% to -10.5% Claude · -21.0% Codex USD', risk: 'Low', exp: 'Exp 007', good: true },
+  { name: 'Static-Prefix Diet (eai audit --fix)', layer: 'Prefix', comp: '-85% instruction file · -65% MCP/skill tax', full: '-67.9% idle prefix (320k raw tok / 50 turns)', risk: 'None', exp: 'Exp 004', good: true },
+  { name: 'eai squeeze (Lossless spill + H7 loop guard)', layer: 'Streams', comp: '-94% to -97% pytest/cargo/go · 100% errors kept', full: 'Zero recovery loops (byte-identical .eai/logs)', risk: 'None (retrievable)', exp: 'Exp 006 / 008', good: true },
+  { name: 'Prose-Only Brevity (AGENTS.md H6)', layer: 'Output', comp: '-65.3% assistant reply prose', full: '78.5% of caveman savings with intact code', risk: 'Low', exp: 'Exp 004', good: true },
+  { name: 'Naive Per-Turn History Pruning', layer: 'History', comp: '-52% raw tokens (misleading!)', full: '+9.2% to +111.8% HIGHER Claude API bill', risk: 'Cache bust!', exp: 'Exp 007', good: false },
+  { name: 'Code Indentation Reformatting (tabs/2-space)', layer: 'Reads', comp: '0.0% (2-space) · +1.9% worse (tabs)', full: 'Myth busted — modern BPE merges spaces', risk: 'Pointless', exp: 'Exp 001', good: false },
+];
+
+function renderLB(filter) {
+  const rows = filter === 'all' ? LEADERBOARD : LEADERBOARD.filter(r => r.layer === filter);
+  document.getElementById('lb-body').innerHTML = rows.map(r => `<tr>
+    <td><strong>${r.name}</strong></td>
+    <td><span class="pill pill-indigo">${r.layer}</span></td>
+    <td>${r.comp}</td>
+    <td><span class="pill ${r.good ? 'pill-good' : 'pill-bad'}">${r.full}</span></td>
+    <td>${r.risk}</td>
+    <td>${r.exp}</td>
+  </tr>`).join('');
+}
+document.querySelectorAll('#lb-filters .tab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#lb-filters .tab').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  renderLB(b.dataset.layer);
+}));
+renderLB('all');
+</script>
+</body>
+</html>

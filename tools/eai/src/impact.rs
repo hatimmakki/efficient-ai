@@ -633,6 +633,7 @@ mod tests {
                 recovery_rate_pct: 0.0,
                 total_tokens_saved: 70000,
                 estimated_resent_tokens_avoided: 1750000,
+                ..Default::default()
             },
             comparisons: vec![],
             advisor_tips: vec![],

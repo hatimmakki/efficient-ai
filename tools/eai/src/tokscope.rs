@@ -1787,17 +1787,57 @@ pub fn cmd_audit(args: &[String]) -> i32 {
     let mut root = PathBuf::from(".");
     let mut include_user = false;
     let mut json_out = false;
+    let mut fix = false;
 
     for a in args {
         match a.as_str() {
             "--include-user" => include_user = true,
             "--json" => json_out = true,
+            "--fix" => fix = true,
             "-h" | "--help" => {
-                println!("Usage: eai audit [path] [--include-user] [--json]");
+                println!("Usage: eai audit [path] [--include-user] [--fix] [--json]");
                 return 0;
             }
             other if !other.starts_with('-') => root = PathBuf::from(other),
             _ => {}
+        }
+    }
+
+    if fix {
+        let mut saved_total = 0usize;
+        for cfg_rel in [".mcp.json", "mcp_config.json", ".cursor/mcp.json"] {
+            let p = root.join(cfg_rel);
+            if p.is_file() {
+                if let Ok(txt) = fs::read_to_string(&p) {
+                    if let Ok(parsed) = serde_json::from_str::<Value>(&txt) {
+                        if let Ok(min) = serde_json::to_string(&parsed) {
+                            let before = est_tokens_from_chars(txt.len());
+                            let after = est_tokens_from_chars(min.len());
+                            if before > after + 5 {
+                                let bak = PathBuf::from(format!("{}.eai.bak", p.display()));
+                                if !bak.exists() {
+                                    let _ = fs::copy(&p, &bak);
+                                }
+                                if fs::write(&p, format!("{}\n", min)).is_ok() {
+                                    saved_total += before - after;
+                                    println!(
+                                        "- [FIXED] Minified `{}` ({} -> {} tok, saved {} tok/turn)",
+                                        cfg_rel,
+                                        before,
+                                        after,
+                                        before - after
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if saved_total == 0 {
+            println!("No bloated MCP JSON files needed minification.");
+        } else {
+            println!("\nTotal static prefix saved: {} tok/turn.\n", saved_total);
         }
     }
 

@@ -606,8 +606,12 @@ pub fn cmd_doctor(args: &[String]) -> i32 {
     let _ = squeeze::compressor::compress_stream("tests/a.py::test_1 PASSED\n1 passed", 150);
     let engine_us = t0.elapsed().as_micros();
 
+    let h = home.as_deref();
+    let paused = project.join(".eai").join("paused").is_file()
+        || h.map(|d| d.join(".eai").join("paused").is_file()).unwrap_or(false);
     println!("## efficient-ai Doctor (`eai doctor`)\n");
     println!("- **Version:** `eai {}` (`{}`)", env!("CARGO_PKG_VERSION"), eai_exe.display());
+    println!("- **Status:** {}", if paused { "PAUSED (run `eai resume`)" } else { "ACTIVE" });
     println!("- **Engine round-trip latency:** {} µs (<10ms target: PASS)", engine_us);
 
     let check_hook = |p: PathBuf| -> &'static str {
@@ -625,7 +629,6 @@ pub fn cmd_doctor(args: &[String]) -> i32 {
         }
     };
 
-    let h = home.as_deref();
     println!(
         "- **Claude Code:** detected={} | project={} | global={}",
         detected.claude,
@@ -653,6 +656,20 @@ pub fn cmd_doctor(args: &[String]) -> i32 {
             "not installed"
         }
     );
+    println!(
+        "- **Cursor / MCP:** detected={} | rule={} | mcp={}",
+        detected.cursor,
+        if project.join(".cursor").join("rules").join("efficient-ai.mdc").is_file() {
+            "installed"
+        } else {
+            "not configured"
+        },
+        if project.join(".cursor").join("mcp.json").is_file() || project.join(".mcp.json").is_file() {
+            "wired (<280 idle tok)"
+        } else {
+            "opt-in (`eai init --mcp`)"
+        }
+    );
 
     let audit_items = audit_directory(&project, false);
     let prefix_tok = always_prefix_tokens(&audit_items);
@@ -675,6 +692,50 @@ pub fn cmd_doctor(args: &[String]) -> i32 {
             "none (run `eai init`)"
         }
     );
+    0
+}
+
+pub fn cmd_pause(args: &[String], pause: bool) -> i32 {
+    let mut project = PathBuf::from(".");
+    let mut global = false;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--project" | "-p" if i + 1 < args.len() => {
+                project = PathBuf::from(&args[i + 1]);
+                i += 1;
+            }
+            "--global" | "-g" => global = true,
+            _ => {}
+        }
+        i += 1;
+    }
+
+    let marker = if global {
+        let Some(h) = user_home() else {
+            eprintln!("Could not determine home directory.");
+            return 1;
+        };
+        h.join(".eai").join("paused")
+    } else {
+        project.join(".eai").join("paused")
+    };
+
+    if pause {
+        if let Some(parent) = marker.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        if let Err(e) = fs::write(&marker, "paused\n") {
+            eprintln!("Error writing {}: {}", marker.display(), e);
+            return 1;
+        }
+        println!("efficient-ai hooks PAUSED (`{}`). Run `eai resume` to re-enable.", marker.display());
+    } else {
+        if marker.is_file() {
+            let _ = fs::remove_file(&marker);
+        }
+        println!("efficient-ai hooks RESUMED.");
+    }
     0
 }
 

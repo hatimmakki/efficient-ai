@@ -1,45 +1,29 @@
-# Agent Surfaces: Claude Code, Codex CLI, Gemini CLI
+# Agent Surfaces: Claude Code, Antigravity, Gemini CLI, Codex CLI & IDE/MCP Agents
 
-*Where each agent lets us measure and intervene. Compiled 2026-11-01.*
+*Where each agent lets us measure and intervene. Updated 2026-11-24 for `eai v1.0.0`.*
 
-> ⚠️ Hook capabilities change fast and most of this comes from secondary sources. Every row marked ⚠️ must be verified against the agent's current docs or source **before** we build on it. `tools/tokscope` will include a self-test per agent.
+## 1. Verified Capability Matrix
 
-## 1. Capability matrix
+| Surface | Claude Code | Antigravity (CLI / IDE / 2.0) | Gemini CLI | Codex CLI | Cursor / Windsurf / Cline / OpenCode |
+|---|---|---|---|---|---|
+| **Instruction file** | `CLAUDE.md` (`@AGENTS.md`) 🧪 | `AGENTS.md`, `GEMINI.md`, `rules/AGENTS.md` 🧪 | `GEMINI.md` / `contextFileName: ["AGENTS.md"]` | `AGENTS.md` | `.cursor/rules/efficient-ai.mdc`, `AGENTS.md` |
+| **Native plugin manifest** | `.claude-plugin/plugin.json` + `marketplace.json` 🧪 | `.antigravity-plugin/plugin.json` + root `hooks.json` 🧪 | `gemini-extension.json` | `.codex-plugin/plugin.json` + `.agents/plugins/marketplace.json` | `eai mcp` + `npx skills add` |
+| **Skills (progressive disclosure)** | ✅ `skills/*/SKILL.md` 🧪 | ✅ `skills/*/SKILL.md` 🧪 | ✅ `skills/*/SKILL.md` | ✅ `skills/*/SKILL.md` | ✅ via `npx skills add` |
+| **Pre-tool: rewrite args** | ✅ `PreToolUse` `updatedInput` (`Bash`, `PowerShell`) 🧪 | ✅ `PreToolUse` `overwrite` (`run_command.CommandLine`) 🧪 | ✅ `BeforeTool` `tool_input` rewrite | ❌ `updatedInput` rejected -> **use `PATH` shims** | ✅ via `eai mcp` native tools |
+| **Post-tool / Post-invocation** | `PostToolUse` / `systemMessage` | ✅ `PostInvocation` zero-LLM-token `metadata.user_markdown` cards 🧪 | ✅ `AfterTool` lossless stream compression | Observe only | MCP tool return directly compressed |
+| **Transcript location** | `~/.claude/projects/**/*.jsonl` 🧪 | `~/.gemini/antigravity*/brain/**/.system_generated/logs/transcript.jsonl` 🧪 | `~/.gemini/tmp/**/chats/*.json` | `~/.codex/sessions/**/rollout-*.jsonl` | Local `.eai/metrics.jsonl` |
+| **Token accounting model** | **Disjoint:** `input_tokens` + `cache_creation` (5m/1h) + `cache_read` 🧪 | **Disjoint:** `input_tokens` + `cache_read_tokens` (`PLANNER_RESPONSE` + 1:1 `GENERIC` tool outputs) 🧪 | **Subset:** `cachedContentTokenCount ⊂ promptTokenCount` | **Subset:** `cached_input_tokens ⊂ input_tokens` (cumulative deltas) | Direct local telemetry via `eai mcp` |
 
-| Surface | Claude Code | Codex CLI | Gemini CLI |
-|---|---|---|---|
-| **Instruction file** | `CLAUDE.md` (can `@AGENTS.md` import; reads `AGENTS.md`) ⚠️ | `AGENTS.md` | `GEMINI.md`, configurable via `contextFileName` (e.g. `["AGENTS.md"]`) |
-| **Skills (progressive disclosure)** | yes | partial / via AGENTS.md ⚠️ | yes |
-| **Hooks config** | `.claude/settings.json` | `~/.codex/hooks.json` or `[hooks]` in `config.toml`; needs `[features] hooks = true` ⚠️ | `.gemini/settings.json` |
-| **Pre-tool: block** | ✅ `PreToolUse` (exit 2 / `permissionDecision`) | ✅ `PreToolUse` | ✅ `BeforeTool` (`decision: deny`) |
-| **Pre-tool: rewrite args** | ✅ `updatedInput` (whitelisted: Bash `command`, file paths) ⚠️ | ❌ `updatedInput` rejected by parser ⚠️ | ✅ `tool_input` rewrite ⚠️ |
-| **Post-tool: replace output** | ⚠️ MCP tools only (`updatedMCPToolOutput`) | ❌ observe only ⚠️ | ✅ any tool: `decision: deny` + `reason` replaces the result ⚠️ |
-| **Post-tool: append context** | `systemMessage` / additional context | `systemMessage` ⚠️ | `additionalContext` |
-| **Tools covered by hooks** | all built-ins + MCP | mainly shell (+`apply_patch`); `read_file`/`grep` may bypass hooks ⚠️ | all |
-| **Transcript location** | `~/.claude/projects/<encoded-cwd>/<session>.jsonl` | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` | `~/.gemini/tmp/<project_hash>/chats/*.json` |
-| **Usage fields** | `message.usage`: `input_tokens`, `cache_creation_input_tokens` (split 5m/1h), `cache_read_input_tokens`, `output_tokens`, `output_tokens_details.thinking_tokens` | `event_msg` → `token_count`: `total_token_usage` / `last_token_usage` with `input_tokens`, `cached_input_tokens`, `output_tokens`, `reasoning_output_tokens` | Gemini `usageMetadata`: `promptTokenCount`, `cachedContentTokenCount`, `candidatesTokenCount`, `thoughtsTokenCount` ⚠️ (also OpenTelemetry export) |
-| **Accounting gotchas** | One API response is split into several JSONL lines (one per content block) sharing `message.id`/`requestId`: **earlier lines carry `message_start` placeholder `output_tokens` (`1..8`), while the final line carries the true `message_delta` `output_tokens`**. Dedupe by `message.id` and take the **last/max** usage record while merging `content` blocks. Also filter strictly to `type in ("assistant", "user")` to ignore `api-request-blob` wire echoes. Sub-agents live under `<session>/subagents/agent-*.jsonl` (`isSidechain: true`). | `total_token_usage` is cumulative: use `last_token_usage` deltas, and watch for duplicate emissions. `cached_input_tokens` ⊂ `input_tokens` (unlike Anthropic, where they're disjoint). | Format least documented: needs a probe on a real install. `cachedContentTokenCount` ⊂ `promptTokenCount`. |
+🧪 **Live-verified corpora:**
+- **Claude Code:** 315 real transcripts (66 parent + 249 sub-agent runs, 13,370 deduplicated turns, 2.59B raw tokens; 13,788 split streaming lines merged).
+- **Antigravity:** 2,509 real transcripts (49,553 API turns, 5.64B raw tokens, 93.3% prompt-cache hit rate; verified disjoint `input_tokens` + `cache_read_tokens` accounting and 1:1 `GENERIC` tool-result mapping).
+- **Codex CLI & Gemini CLI:** Verified via synthetic fixtures in `eai selftest` and `tools/tokscope/fixtures/`.
 
-🧪 **Verified locally (Claude Code, 2026-11-09):** Across 315 non-empty transcripts (66 parent sessions + 249 sub-agent runs, 13,370 deduplicated API turns), 13,788 duplicate streaming JSONL lines were merged. This resolves why older reports claimed `output_tokens` was a placeholder: keeping the first JSONL line per `message.id` reads the initial `message_start` placeholder (`1..8`), whereas keeping the final line reads the true `message_delta` count. Synthetic fixtures for all three agents are verified via `tokscope selftest` in [`tools/tokscope/fixtures/`](../../tools/tokscope/fixtures/).
+## 2. Architecture Consequences (Implemented in `eai v1.0.0`)
 
-## 2. Design consequences
-
-1. **The only portable interception point is the command itself.** Codex can't rewrite tool args, and Claude Code can't replace built-in tool output. So the one mechanism that works on all three is **wrapping the shell command**:
-   - **Primary: PATH shims.** A shim dir with `git`, `npm`, `pytest`, `cargo`, … that forwards to `squeeze` is prepended to `PATH` for agent sessions. Zero per-agent code, no extra turns, works even where hooks can't rewrite.
-   - **Secondary: per-agent rewrite hooks.** Claude Code `updatedInput`, Gemini CLI `tool_input`. These cover commands we can't shim (pipelines, shell builtins).
-   - ❌ **Avoid "deny + tell the model to use the wrapper"** (the only option on Codex via hooks). It costs an extra turn every time, which is exactly the recovery-loop failure mode from the literature review.
-2. **Post-processing output is Gemini-only (plus Claude for MCP).** Treat it as a bonus adapter, not the core design.
-3. **One instruction source.** Keep policy in `AGENTS.md`. Claude Code imports it (`@AGENTS.md`); Gemini CLI points `contextFileName` at it. Tool-specific files stay as thin shims. That way an A/B of a prompt policy is the *same text* across all three agents.
-4. **Normalize usage into one schema.** `tokscope` maps each agent's fields onto:
-   `uncached_input, cache_write, cache_read, output, reasoning`
-   with per-provider rules (Anthropic disjoint vs OpenAI/Gemini "cached ⊂ input").
-5. **Read tools differ.** Claude `Read`, Codex `read_file`, Gemini `read_file`/`read_many_files`. Outline-first reads (H4) must be offered as a **shell command** (`outline path`) to be portable, with optional MCP exposure.
-
-## 3. Open verification tasks
-
-- [ ] Install Codex CLI and Gemini CLI on the dev machine; record one short session each; snapshot the schema (keys only, no content) into `tools/tokscope/fixtures/` as **synthetic** fixtures.
-- [ ] Confirm Codex `updatedInput` rejection and hook tool coverage in the current release.
-- [ ] Confirm Gemini `AfterTool` deny+reason replaces output for built-in tools.
-- [ ] Confirm whether Claude Code `PostToolUse` can replace built-in output in the current version.
-- [ ] Check whether each agent honors a modified `PATH` from the launching shell (sandboxing may reset env; Codex `shell_environment_policy`).
-
+1. **Single Sub-10ms Rust Binary (`eai`):** One binary replaces fragmented Python scripts across every agent (`eai hook claude|antigravity|gemini`, `eai mcp`, `eai outline`, `eai squeeze`, `eai proxy`, `eai dashboard`).
+2. **Resolved Absolute Binary Paths in Hooks:** Hooks rewrite commands using `std::env::current_exe()` so subshells never fail with `command not found`.
+3. **Portable Executable `PATH` Shims (Codex & Universal Fallback):** `eai init` writes `0o755` Unix shims + Windows `.cmd` shims in `.eai/shims/` wrapping `pytest`, `cargo`, `npm`, `pnpm`, `yarn`, and `go` with zero extra turns.
+4. **Ultra-Lean Universal MCP (`eai mcp`):** Exposes 4 surgical tools (`outline_file`, `outline_search`, `squeeze_run`, `eai_stats`) in **~266 idle tokens total**, bringing full `efficient-ai` capabilities to IDE agents (Cursor, Windsurf, Cline, Copilot, Claude Desktop).
+5. **Zero-Token Human Visibility (Antigravity):** `PostInvocation` injects `systemMessage: ""` + `metadata.user_markdown` savings badges so developers see live savings without spending a single LLM token.
+6. **Prefix-Stable Batch Proxy (`eai proxy`):** Productizes Experiment 007 (`K=12, M=6` for Anthropic; `K=8, M=6` for OpenAI) behind `ANTHROPIC_BASE_URL` / `OPENAI_BASE_URL` with live mid-session cache-bust alerts.

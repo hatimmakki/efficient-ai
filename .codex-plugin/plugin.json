@@ -1,6 +1,6 @@
 {
   "name": "efficient-ai",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "description": "Same quality, fewer tokens: unified eai binary, structure-aware code reading (outline), lossless output compression (squeeze), and multi-agent session token attribution (tokscope).",
   "author": {
     "name": "Hatim Makki",

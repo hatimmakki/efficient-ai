@@ -5,6 +5,10 @@
 `efficient-ai` is an open research project and zero-dependency Rust toolkit (`eai`) for cutting the token and API cost of AI coding agents—with **Claude Code**, **Antigravity**, **Gemini CLI**, and **Codex CLI** supported as first-class native targets.
 
 <p align="center">
+  <img src="assets/hero-demo.svg" width="100%" alt="efficient-ai 10-Second Setup, Live Impact Proof & Local Dashboard" />
+</p>
+
+<p align="center">
   <img src="assets/architecture-flow.svg" width="100%" alt="efficient-ai Architecture and 4-Layer Token & Cost Pipeline" />
 </p>
 
@@ -23,12 +27,13 @@ Popular "token killer" wrappers claim **60–90% token savings** by counting byt
 
 ---
 
-## Technique Leaderboard (Experiments 001–007)
+## Technique Leaderboard (Experiments 001–008)
 
 All results below are reproducible via the scripts in [`experiments/`](experiments/) and tools in [`tools/`](tools/):
 
 | Technique / Tool | Layer | Stream / Component Impact | Full-Session / Corpus Impact | Quality Risk | Experiment |
 |---|---|---|---|---|---|
+| **Full `eai` v1.0.0 Stack (`outline` + `squeeze` + Prefix Diet + `eai proxy`)** | All 4 Layers | **7.9 ms** hook wall time; **248 tok** MCP idle; **100%** symbol & error pass | **−27.1% Claude USD**, **−32.5% Antigravity/Gemini USD**, **−37.6% Codex USD** (315-session paired replay) | None (lossless) | [Exp 008](experiments/008-paired-e2e-benchmark/RESULTS.md) |
 | **[`outline`](tools/outline/) (Structure-aware file & symbol reader)** | Reads (~64% of tool tokens) | **−89.7%** on file explore; **−72.7%** on explore + symbol read | **−37.9% to −47.2%** of all read tokens (**−19.8% to −25.2%** of all tool exposure; `118.1M` fewer re-sent tokens) | Low (lossless `--symbol` & `--lines`) | [Exp 005](experiments/005-outline-read-layer/RESULTS.md) |
 | **Cache-Aware Batch Observation Masking ($K=10\text{–}15, M=6$)** | History | Masks old tool outputs $>6$ turns old only at fixed $K$-turn boundaries | **−22.9% to −38.2%** raw input tokens; **−9.6% to −10.5% Claude cost**; **−21.0% to −34.8% Codex cost** (vs. **+9.2% to +111.8% cost increase** for naive per-turn masking) | Low | [Exp 007](experiments/007-cache-aware-observation-masking/RESULTS.md) |
 | **Static-Prefix Diet ([`tokscope audit`](tools/tokscope/) + [`prompts/AGENTS.md`](prompts/AGENTS.md))** | Static Prefix | **−85.0%** instruction file; **−64.5%** skill idle metadata; **−65.0%** MCP schema | **−67.9% idle prefix** (`9,438 → 3,027` tok/turn), saving **320,550 raw tokens** (`39,428` cost-weighted) per 50-turn session | None | [Exp 004](experiments/004-free-wins-and-static-diet/RESULTS.md) |
@@ -150,8 +155,16 @@ eai squeeze -- cargo test
 eai impact --since 30d             # Before vs. After table + quality guardrails + optimization advisor
 eai dashboard --port 7420          # Local offline web dashboard (127.0.0.1:7420)
 eai share --out proof.svg          # Privacy-sanitized SVG efficiency proof card
-eai audit . --include-user         # Audits AGENTS.md, CLAUDE.md, GEMINI.md, Cursor rules, skills & MCP configs
+eai audit . --include-user --fix   # Audits & auto-minifies static prefix configs
+eai pause / eai resume             # Toggle hooks cleanly for debugging or A/B runs
+
+# 4. Opt-in Exp 007 Cache-Aware Batch Observation Masking proxy + simulator
+eai proxy --simulate path/to/session.jsonl            # Dry-run exact cache & USD impact on your session
+eai proxy --provider anthropic --port 7421            # ANTHROPIC_BASE_URL=http://127.0.0.1:7421 (K=12, M=6)
+eai proxy --provider openai --port 7421               # OPENAI_BASE_URL=http://127.0.0.1:7421/v1 (K=8, M=6)
 ```
+
+> **Interactive Cost Calculator & Launch Kit:** Open [`docs/index.html`](docs/index.html) for the interactive Prompt-Cache & Prefix Tax Calculator, or see [`docs/LAUNCH.md`](docs/LAUNCH.md) for release and marketplace instructions.
 
 ---
 
