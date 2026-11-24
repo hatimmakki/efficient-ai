@@ -151,17 +151,19 @@ eai outline search "cache_write" tools/
 eai squeeze -- pytest -v
 eai squeeze -- cargo test
 
-# 3. AI performance monitoring, Before/After proof, local web dashboard & shareable SVG cards
-eai impact --since 30d             # Before vs. After table + quality guardrails + optimization advisor
-eai dashboard --port 7420          # Local offline web dashboard (127.0.0.1:7420)
+# 3. AI performance monitoring, strict per-repo Before/After proof, dashboard & custom pricing
+eai impact --project . --since 30d # Repo-scoped Before vs. After proof + guardrails + advisor
+eai dashboard --port 7420          # Local offline web UI (This Repo / All Projects + Top Projects)
 eai share --out proof.svg          # Privacy-sanitized SVG efficiency proof card
+eai pricing --init                 # Customize model USD rates in ~/.eai/pricing.json
 eai audit . --include-user --fix   # Audits & auto-minifies static prefix configs
-eai pause / eai resume             # Toggle hooks cleanly for debugging or A/B runs
+eai pause / eai resume             # Toggle hooks cleanly for debugging or paired A/B runs
 
-# 4. Opt-in Exp 007 Cache-Aware Batch Observation Masking proxy + simulator
+# 4. Opt-in Exp 007 Cache-Aware Batch Masking proxy (Anthropic, OpenAI Chat/Responses, Gemini)
 eai proxy --simulate path/to/session.jsonl            # Dry-run exact cache & USD impact on your session
 eai proxy --provider anthropic --port 7421            # ANTHROPIC_BASE_URL=http://127.0.0.1:7421 (K=12, M=6)
-eai proxy --provider openai --port 7421               # OPENAI_BASE_URL=http://127.0.0.1:7421/v1 (K=8, M=6)
+eai proxy --provider openai --port 7421               # OPENAI_BASE_URL=http://127.0.0.1:7421/v1 (Chat & Responses)
+eai proxy --provider gemini --port 7421               # GEMINI_API_BASE=http://127.0.0.1:7421 (generateContent)
 ```
 
 > **Interactive Cost Calculator & Launch Kit:** Open [`docs/index.html`](docs/index.html) for the interactive Prompt-Cache & Prefix Tax Calculator, or see [`docs/LAUNCH.md`](docs/LAUNCH.md) for release and marketplace instructions.

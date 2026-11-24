@@ -72,9 +72,13 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Generate SHA256SUMS.txt
-        working-directory: artifacts
-        run: sha256sum eai-* > SHA256SUMS.txt
+      - name: Generate SHA256SUMS.txt & Stamped Homebrew/Scoop Manifests
+        run: |
+          cd artifacts
+          sha256sum eai-* > SHA256SUMS.txt
+          cd ..
+          VERSION="${GITHUB_REF_NAME#v}"
+          python3 scripts/update_packaging.py --version "$VERSION" --sums artifacts/SHA256SUMS.txt --out-dir artifacts/
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2

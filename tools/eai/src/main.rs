@@ -4,6 +4,7 @@ mod dashboard;
 mod hooks;
 mod impact;
 mod mcp;
+mod pricing;
 mod proxy;
 mod setup;
 mod telemetry;
@@ -29,8 +30,9 @@ fn print_help() {
          \x20 eai watch [--project <dir>] [--once]             Live terminal watcher with cache-bust alerts\n\
          \x20 eai share [--out eai-efficiency-card.svg]        Generate privacy-safe SVG efficiency proof card\n\
          \x20 eai stats [--project <dir>] [--global] [--json]  Local savings, recovery rate & baseline metrics\n\
-         \x20 eai analyze [path] [--agent auto] [--since 14d]  Multi-agent token, cache & USD cost profiler\n\
-         \x20 eai audit [path] [--include-user] [--fix]        Audit & auto-minify static prefix configs\n\
+         \x20 eai analyze [path] [--project <dir>] [--since 14d]  Multi-agent token, cache & USD cost profiler\n\
+         \x20 eai pricing [--init] [--json]                       View/customize ~/.eai/pricing.json USD rates\n\
+         \x20 eai audit [path] [--include-user] [--fix]           Audit & auto-minify static prefix configs\n\
          \n\
          CORE TOOLS & INTEGRATIONS:\n\
          \x20 eai outline <file|dir>... [--symbol S] [--budget N]  Tree-sitter outlines & symbol reads\n\
@@ -88,6 +90,7 @@ fn main() -> ExitCode {
         "pause" => ExitCode::from(setup::cmd_pause(rest, true) as u8),
         "resume" => ExitCode::from(setup::cmd_pause(rest, false) as u8),
         "analyze" => ExitCode::from(tokscope::cmd_analyze(rest) as u8),
+        "pricing" => ExitCode::from(pricing::cmd_pricing(rest) as u8),
         "audit" => ExitCode::from(tokscope::cmd_audit(rest) as u8),
         "sanitize" => ExitCode::from(tokscope::cmd_sanitize(rest) as u8),
         "selftest" => ExitCode::from(tokscope::cmd_selftest() as u8),

@@ -27,6 +27,7 @@ pub struct BeforeAfterDelta {
 #[derive(Debug, Serialize)]
 pub struct ImpactReport {
     pub project_name: String,
+    pub scope_label: String, // "project" or "all_projects"
     pub window_days: u64,
     pub has_baseline: bool,
     pub baseline: Option<BaselineSnapshot>,
@@ -50,6 +51,7 @@ pub fn build_impact_report(
     window_days: u64,
     agent_filter: &str,
     max_sessions: Option<usize>,
+    scope_to_project: bool,
 ) -> (ImpactReport, CorpusSummary) {
     let resolved = fs::canonicalize(project_dir).unwrap_or_else(|_| project_dir.to_path_buf());
     let project_name = resolved
@@ -63,7 +65,21 @@ pub fn build_impact_report(
     let audit_items = audit_directory(&resolved, false);
     let current_prefix = always_prefix_tokens(&audit_items);
 
-    let sessions = load_sessions_window(None, agent_filter, Some(window_days), max_sessions);
+    let all_sessions = load_sessions_window(None, agent_filter, Some(window_days), max_sessions);
+    let (sessions, scope_label) = if scope_to_project {
+        let matched: Vec<_> = all_sessions
+            .iter()
+            .filter(|s| s.matches_project(&resolved))
+            .cloned()
+            .collect();
+        if matched.is_empty() {
+            (all_sessions, "all_projects".to_string())
+        } else {
+            (matched, "project".to_string())
+        }
+    } else {
+        (all_sessions, "all_projects".to_string())
+    };
 
     // If a baseline exists, split recent sessions after `baseline.captured_at` when available;
     // otherwise use the full window for current performance telemetry.
@@ -159,6 +175,7 @@ pub fn build_impact_report(
 
     let report = ImpactReport {
         project_name,
+        scope_label,
         window_days,
         has_baseline: baseline.is_some(),
         baseline,
@@ -196,6 +213,7 @@ pub fn cmd_impact(args: &[String]) -> i32 {
     let mut project = PathBuf::from(".");
     let mut since_days: u64 = 30;
     let mut agent = "auto".to_string();
+    let mut all_projects = false;
     let mut json_out = false;
 
     let mut i = 0;
@@ -213,11 +231,12 @@ pub fn cmd_impact(args: &[String]) -> i32 {
                 agent = args[i + 1].clone();
                 i += 1;
             }
+            "--all-projects" => all_projects = true,
             "--json" => json_out = true,
             "-h" | "--help" => {
                 println!(
-                    "Usage: eai impact [--project <dir>] [--since 30d] [--agent auto] [--json]\n\
-                     Show Before vs. After efficient-ai performance proof, savings, quality guardrails, and optimization tips."
+                    "Usage: eai impact [--project <dir>] [--all-projects] [--since 30d] [--agent auto] [--json]\n\
+                     Show Before vs. After efficient-ai performance proof (scoped strictly to this repo by default), savings, quality guardrails, and optimization tips."
                 );
                 return 0;
             }
@@ -226,15 +245,21 @@ pub fn cmd_impact(args: &[String]) -> i32 {
         i += 1;
     }
 
-    let (report, _summary) = build_impact_report(&project, since_days, &agent, Some(250));
+    let (report, _summary) =
+        build_impact_report(&project, since_days, &agent, Some(250), !all_projects);
     if json_out {
         println!("{}", serde_json::to_string_pretty(&report).unwrap_or_default());
         return 0;
     }
 
+    let scope_str = if report.scope_label == "project" {
+        "repo-scoped"
+    } else {
+        "all projects"
+    };
     println!(
-        "# efficient-ai Impact Report — {} (last {} days)\n",
-        report.project_name, report.window_days
+        "# efficient-ai Impact Report — {} (last {} days, {})\n",
+        report.project_name, report.window_days, scope_str
     );
 
     if !report.comparisons.is_empty() {
@@ -491,7 +516,7 @@ pub fn cmd_share(args: &[String]) -> i32 {
         i += 1;
     }
 
-    let (report, _) = build_impact_report(&project, since_days, "auto", Some(250));
+    let (report, _) = build_impact_report(&project, since_days, "auto", Some(250), true);
     let svg = render_proof_card_svg(&report);
     if let Some(parent) = out_path.parent() {
         if !parent.as_os_str().is_empty() {
@@ -606,6 +631,7 @@ mod tests {
     fn test_proof_card_svg_is_valid_and_sanitized() {
         let report = ImpactReport {
             project_name: "secret-internal-repo".into(),
+            scope_label: "project".into(),
             window_days: 14,
             has_baseline: true,
             baseline: None,

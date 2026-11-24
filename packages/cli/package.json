@@ -1,6 +1,6 @@
 {
   "name": "efficient-ai",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Same quality, fewer tokens: unified zero-dependency Rust CLI (eai) cutting AI coding agent token & API cost by 27-38% across Claude Code, Antigravity, Gemini CLI, Codex, and Cursor.",
   "license": "Apache-2.0",
   "repository": {

@@ -13,11 +13,44 @@ use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-pub fn build_dashboard_payload(project_dir: &Path, since_days: u64, agent: &str) -> Value {
-    let (report, summary) = build_impact_report(project_dir, since_days, agent, Some(300));
+pub fn build_dashboard_payload(
+    project_dir: &Path,
+    since_days: u64,
+    agent: &str,
+    scope_project: bool,
+) -> Value {
+    let (report, summary) =
+        build_impact_report(project_dir, since_days, agent, Some(300), scope_project);
     let audit_items = audit_directory(project_dir, false);
     let recent_events = read_events(&project_dir.join(".eai").join("metrics.jsonl"));
     let recent_tail: Vec<_> = recent_events.into_iter().rev().take(25).collect();
+
+    let mut top_projects: Vec<Value> = summary
+        .by_project
+        .iter()
+        .map(|(name, pb)| {
+            let chr = if pb.total_input > 0 {
+                100.0 * (pb.cache_read as f64) / (pb.total_input as f64)
+            } else {
+                0.0
+            };
+            json!({
+                "project": name,
+                "sessions": pb.sessions,
+                "turns": pb.turns,
+                "cache_hit_pct": (chr * 10.0).round() / 10.0,
+                "estimated_usd": (pb.estimated_usd * 100.0).round() / 100.0,
+            })
+        })
+        .collect();
+    top_projects.sort_by(|a, b| {
+        b["estimated_usd"]
+            .as_f64()
+            .unwrap_or(0.0)
+            .partial_cmp(&a["estimated_usd"].as_f64().unwrap_or(0.0))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    top_projects.truncate(8);
 
     let mut daily: Vec<_> = summary.by_day.values().collect();
     if daily.len() > 30 {
@@ -70,6 +103,7 @@ pub fn build_dashboard_payload(project_dir: &Path, since_days: u64, agent: &str)
     json!({
         "report": report,
         "by_agent": summary.by_agent,
+        "top_projects": top_projects,
         "daily": daily,
         "top_categories": top_cats,
         "top_models": models,
@@ -125,14 +159,16 @@ fn handle_client(mut stream: TcpStream, project_dir: &Path, default_days: u64) {
             .and_then(|s| s.parse::<u64>().ok())
             .unwrap_or(default_days);
         let agent = parse_query_param(target, "agent").unwrap_or_else(|| "auto".to_string());
-        let payload = build_dashboard_payload(project_dir, days, &agent);
+        let scope_project = parse_query_param(target, "scope").as_deref() == Some("project");
+        let payload = build_dashboard_payload(project_dir, days, &agent, scope_project);
         let body = serde_json::to_vec(&payload).unwrap_or_else(|_| b"{}".to_vec());
         write_http_response(&mut stream, "200 OK", "application/json; charset=utf-8", &body);
     } else if target.starts_with("/api/card.svg") {
         let days = parse_query_param(target, "since")
             .and_then(|s| s.parse::<u64>().ok())
             .unwrap_or(default_days);
-        let (report, _) = build_impact_report(project_dir, days, "auto", Some(300));
+        let scope_project = parse_query_param(target, "scope").as_deref() == Some("project");
+        let (report, _) = build_impact_report(project_dir, days, "auto", Some(300), scope_project);
         let svg = render_proof_card_svg(&report);
         write_http_response(&mut stream, "200 OK", "image/svg+xml; charset=utf-8", svg.as_bytes());
     } else {
@@ -312,6 +348,10 @@ const DASHBOARD_HTML: &str = r##"<!doctype html>
     </div>
     <div class="controls">
       <span class="live-pill"><span class="dot"></span> Local Live</span>
+      <select id="scope">
+        <option value="project" selected>This Repo</option>
+        <option value="all">All Projects</option>
+      </select>
       <select id="since">
         <option value="7">Last 7 days</option>
         <option value="14">Last 14 days</option>
@@ -346,6 +386,8 @@ const DASHBOARD_HTML: &str = r##"<!doctype html>
     <div class="card">
       <h2>Breakdown by Agent</h2>
       <div id="agents-table"></div>
+      <h2 style="margin-top:20px">Top Projects by Spend</h2>
+      <div id="projects-table"></div>
     </div>
     <div class="card">
       <h2>Tool-Output Exposure (Re-sent History)</h2>
@@ -370,15 +412,16 @@ const fmt = (n) => n >= 1e9 ? (n/1e9).toFixed(2)+'B' : n >= 1e6 ? (n/1e6).toFixe
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 async function refresh() {
+  const scope = document.getElementById('scope').value;
   const since = document.getElementById('since').value;
   const agent = document.getElementById('agent').value;
-  document.getElementById('card-link').href = `/api/card.svg?since=${since}`;
-  const res = await fetch(`/api/overview?since=${since}&agent=${agent}`);
+  document.getElementById('card-link').href = `/api/card.svg?since=${since}&scope=${scope}`;
+  const res = await fetch(`/api/overview?since=${since}&agent=${agent}&scope=${scope}`);
   const data = await res.json();
   const r = data.report;
   const st = r.local_stats;
 
-  document.getElementById('proj-name').textContent = '· ' + r.project_name;
+  document.getElementById('proj-name').textContent = '· ' + r.project_name + (r.scope_label === 'project' ? ' (repo-scoped)' : ' (all projects)');
 
   document.getElementById('kpis').innerHTML = `
     <div class="card">
@@ -442,6 +485,12 @@ async function refresh() {
       }).join('') + `</tbody></table>`
     : `<div class="empty">No transcripts found for the selected filter.</div>`;
 
+  const projs = data.top_projects || [];
+  document.getElementById('projects-table').innerHTML = projs.length
+    ? `<table><thead><tr><th>Project</th><th class="num">Sessions</th><th class="num">Cache %</th><th class="num">Est. USD</th></tr></thead><tbody>` +
+      projs.map(p => `<tr><td><strong>${esc(p.project)}</strong></td><td class="num">${p.sessions}</td><td class="num">${p.cache_hit_pct.toFixed(1)}%</td><td class="num"><strong>$${p.estimated_usd.toFixed(2)}</strong></td></tr>`).join('') + `</tbody></table>`
+    : `<div class="empty">No project paths detected yet.</div>`;
+
   // Category bars
   const cats = data.top_categories || [];
   const totResent = cats.reduce((acc, c) => acc + c.resent_tokens, 0) || 1;
@@ -467,6 +516,7 @@ async function refresh() {
     : `<div class="empty">No local events yet. Use <code>eai outline</code>, <code>eai squeeze</code>, or active hooks to stream live savings here.</div>`;
 }
 
+document.getElementById('scope').addEventListener('change', refresh);
 document.getElementById('since').addEventListener('change', refresh);
 document.getElementById('agent').addEventListener('change', refresh);
 refresh();
@@ -483,8 +533,9 @@ mod tests {
     #[test]
     fn test_dashboard_payload_and_embedded_html() {
         let cwd = std::env::current_dir().unwrap();
-        let payload = build_dashboard_payload(&cwd, 7, "auto");
+        let payload = build_dashboard_payload(&cwd, 7, "auto", true);
         assert!(payload["report"].is_object());
+        assert!(payload["top_projects"].is_array());
         assert!(payload["daily"].is_array());
         assert!(DASHBOARD_HTML.contains("/api/overview"));
         assert!(DASHBOARD_HTML.contains("/api/card.svg"));

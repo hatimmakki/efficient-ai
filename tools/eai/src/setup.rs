@@ -551,9 +551,19 @@ pub fn cmd_init(args: &[String]) -> i32 {
         );
     }
 
-    // 4. Snapshot Pre-EAI Baseline from up to 40 most recent sessions (<200ms)
+    // 4. Snapshot Pre-EAI Baseline (preferring this repo's sessions, falling back to recent 40)
     if capture_baseline && !project.join(".eai").join("baseline.json").exists() {
-        let sessions = load_recent_sessions("auto", 40);
+        let all_recent = load_recent_sessions("auto", 80);
+        let repo_matched: Vec<_> = all_recent
+            .iter()
+            .filter(|s| s.matches_project(&project))
+            .cloned()
+            .collect();
+        let sessions = if repo_matched.is_empty() {
+            all_recent.into_iter().take(40).collect()
+        } else {
+            repo_matched
+        };
         let summary = summarize_corpus(&sessions);
         let audit_items = audit_directory(&project, false);
         let prefix_tok = always_prefix_tokens(&audit_items);

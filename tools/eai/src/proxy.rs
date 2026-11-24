@@ -67,14 +67,12 @@ fn fnv1a_64(bytes: &[u8]) -> u64 {
 
 fn compute_conv_and_prefix_hashes(body: &Value) -> (u64, u64) {
     let mut prefix_buf = String::new();
-    if let Some(m) = body.get("model") {
-        prefix_buf.push_str(&m.to_string());
-    }
-    if let Some(sys) = body.get("system") {
-        prefix_buf.push_str(&sys.to_string());
-    }
-    if let Some(tools) = body.get("tools") {
-        prefix_buf.push_str(&tools.to_string());
+    for key in ["model", "system", "instructions", "systemInstruction", "system_instruction", "tools"] {
+        if let Some(v) = body.get(key) {
+            prefix_buf.push_str(key);
+            prefix_buf.push(':');
+            prefix_buf.push_str(&v.to_string());
+        }
     }
     let prefix_hash = fnv1a_64(prefix_buf.as_bytes());
 
@@ -84,6 +82,18 @@ fn compute_conv_and_prefix_hashes(body: &Value) -> (u64, u64) {
         .and_then(|arr| {
             arr.iter()
                 .find(|m| m.get("role").and_then(|r| r.as_str()) == Some("user"))
+        })
+        .or_else(|| {
+            // OpenAI /v1/responses uses `input` array
+            body.get("input")
+                .and_then(|v| v.as_array())
+                .and_then(|arr| arr.first())
+        })
+        .or_else(|| {
+            // Gemini API uses `contents` array
+            body.get("contents")
+                .and_then(|v| v.as_array())
+                .and_then(|arr| arr.first())
         })
         .map(|m| m.to_string())
         .unwrap_or_default();
@@ -119,8 +129,11 @@ fn value_text_len(v: &Value) -> usize {
     }
 }
 
-/// Apply prefix-stable Cache-Aware Batch Observation Masking to an Anthropic Messages or
-/// OpenAI Chat Completions JSON request body in place.
+/// Apply prefix-stable Cache-Aware Batch Observation Masking across ALL 4 major LLM APIs:
+/// - Anthropic Messages (`/v1/messages`: `messages[].content[].tool_result`)
+/// - OpenAI Chat Completions (`/v1/chat/completions`: `messages[]` with `role: "tool"`)
+/// - OpenAI Responses (`/v1/responses`: `input[]` with `type: "function_call_output"`)
+/// - Gemini API (`:generateContent` / `:streamGenerateContent`: `contents[].parts[].functionResponse`)
 pub fn apply_batch_masking(
     body: &mut Value,
     cfg: BatchMaskConfig,
@@ -128,7 +141,7 @@ pub fn apply_batch_masking(
 ) -> MaskOutcome {
     let mut outcome = MaskOutcome::default();
 
-    // 1. Check static prefix stability (cache-bust detector)
+    // 1. Check static prefix stability (cache-bust detector across all 4 providers)
     if let Some(tr) = tracker {
         let (conv_h, pref_h) = compute_conv_and_prefix_hashes(body);
         if let Some(&prev) = tr.by_conv.get(&conv_h) {
@@ -139,6 +152,77 @@ pub fn apply_batch_masking(
         tr.by_conv.insert(conv_h, pref_h);
     }
 
+    // 2A. OpenAI Responses API (`input[]` with `type == "function_call_output"`)
+    if let Some(inputs) = body.get_mut("input").and_then(|v| v.as_array_mut()) {
+        let idxs: Vec<usize> = inputs
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, item)| {
+                (item.get("type").and_then(|v| v.as_str()) == Some("function_call_output"))
+                    .then_some(idx)
+            })
+            .collect();
+        outcome.total_observations = idxs.len();
+        let eligible = idxs.len().saturating_sub(cfg.keep_m);
+        let active_boundary = (eligible / cfg.batch_k.max(1)) * cfg.batch_k.max(1);
+        outcome.active_boundary = active_boundary;
+        for (obs_idx, &item_idx) in idxs.iter().take(active_boundary).enumerate() {
+            if let Some(obj) = inputs.get_mut(item_idx).and_then(|v| v.as_object_mut()) {
+                let orig_len = obj.get("output").map(value_text_len).unwrap_or(0);
+                if orig_len >= cfg.min_chars {
+                    let placeholder = deterministic_placeholder(orig_len, obs_idx, cfg.batch_k);
+                    let saved = orig_len.saturating_sub(placeholder.len());
+                    obj.insert("output".to_string(), Value::String(placeholder));
+                    outcome.masked_count += 1;
+                    outcome.chars_saved += saved;
+                }
+            }
+        }
+        return outcome;
+    }
+
+    // 2B. Gemini API (`contents[].parts[].functionResponse.response`)
+    if let Some(contents) = body.get_mut("contents").and_then(|v| v.as_array_mut()) {
+        let mut locs: Vec<(usize, usize)> = Vec::new();
+        for (ci, c) in contents.iter().enumerate() {
+            if let Some(parts) = c.get("parts").and_then(|v| v.as_array()) {
+                for (pi, part) in parts.iter().enumerate() {
+                    if part.get("functionResponse").is_some() {
+                        locs.push((ci, pi));
+                    }
+                }
+            }
+        }
+        outcome.total_observations = locs.len();
+        let eligible = locs.len().saturating_sub(cfg.keep_m);
+        let active_boundary = (eligible / cfg.batch_k.max(1)) * cfg.batch_k.max(1);
+        outcome.active_boundary = active_boundary;
+        for (obs_idx, &(ci, pi)) in locs.iter().take(active_boundary).enumerate() {
+            if let Some(fr) = contents
+                .get_mut(ci)
+                .and_then(|c| c.get_mut("parts"))
+                .and_then(|p| p.as_array_mut())
+                .and_then(|arr| arr.get_mut(pi))
+                .and_then(|part| part.get_mut("functionResponse"))
+                .and_then(|fr| fr.as_object_mut())
+            {
+                let orig_len = fr.get("response").map(|v| v.to_string().len()).unwrap_or(0);
+                if orig_len >= cfg.min_chars {
+                    let placeholder = deterministic_placeholder(orig_len, obs_idx, cfg.batch_k);
+                    let saved = orig_len.saturating_sub(placeholder.len() + 18);
+                    fr.insert(
+                        "response".to_string(),
+                        serde_json::json!({"eai_masked": placeholder}),
+                    );
+                    outcome.masked_count += 1;
+                    outcome.chars_saved += saved;
+                }
+            }
+        }
+        return outcome;
+    }
+
+    // 2C. Anthropic Messages & OpenAI Chat Completions (`messages[]`)
     let Some(messages) = body.get_mut("messages").and_then(|v| v.as_array_mut()) else {
         return outcome;
     };
@@ -440,9 +524,12 @@ fn handle_proxy_connection(
         Vec::new()
     };
 
-    // Apply Cache-Aware Batch Masking on JSON POST requests to chat/messages endpoints
+    // Apply Cache-Aware Batch Masking on JSON POST requests to Anthropic, OpenAI Chat/Responses, or Gemini endpoints
     let is_llm_endpoint = method.eq_ignore_ascii_case("POST")
-        && (target.contains("/messages") || target.contains("/chat/completions"));
+        && (target.contains("/messages")
+            || target.contains("/chat/completions")
+            || target.contains("/responses")
+            || target.contains("generateContent"));
     if is_llm_endpoint && !body_bytes.is_empty() {
         if let Ok(mut json_body) = serde_json::from_slice::<Value>(&body_bytes) {
             let outcome = {
@@ -866,5 +953,46 @@ mod tests {
 
         px_handle.join().unwrap();
         up_handle.join().unwrap();
+    }
+
+    #[test]
+    fn test_openai_responses_and_gemini_batch_masking() {
+        let cfg = BatchMaskConfig {
+            batch_k: 4,
+            keep_m: 2,
+            min_chars: 400,
+        };
+        let big = "y".repeat(700);
+
+        // 1. OpenAI /v1/responses (`input[].function_call_output`)
+        let mut resp_items = Vec::new();
+        for i in 0..6 {
+            resp_items.push(json!({"type": "function_call_output", "call_id": format!("c{}", i), "output": big}));
+        }
+        let mut openai_resp = json!({"model": "gpt-5-codex", "instructions": "be concise", "input": resp_items});
+        let o_res = apply_batch_masking(&mut openai_resp, cfg, None);
+        assert_eq!(o_res.masked_count, 4);
+        assert!(openai_resp["input"][0]["output"].as_str().unwrap().starts_with("[eai masked:"));
+        assert_eq!(openai_resp["input"][5]["output"].as_str().unwrap().len(), 700);
+
+        // 2. Gemini API (`contents[].parts[].functionResponse.response`)
+        let mut contents = Vec::new();
+        for i in 0..6 {
+            contents.push(json!({
+                "role": "function",
+                "parts": [{"functionResponse": {"name": format!("tool_{}", i), "response": {"output": big}}}]
+            }));
+        }
+        let mut gem_body = json!({"systemInstruction": {"parts": [{"text": "be concise"}]}, "contents": contents});
+        let g_res = apply_batch_masking(&mut gem_body, cfg, None);
+        assert_eq!(g_res.masked_count, 4);
+        assert!(gem_body["contents"][0]["parts"][0]["functionResponse"]["response"]["eai_masked"]
+            .as_str()
+            .unwrap()
+            .starts_with("[eai masked:"));
+        assert!(gem_body["contents"][5]["parts"][0]["functionResponse"]["response"]["output"]
+            .as_str()
+            .unwrap()
+            .len() == 700);
     }
 }

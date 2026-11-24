@@ -45,28 +45,9 @@ pub fn weights_for_agent(agent: &str) -> AgentWeights {
     }
 }
 
-/// Base uncached input price in USD per 1M tokens (used with provider multipliers for cost estimates).
+/// Base uncached input price in USD per 1M tokens (delegates to external `~/.eai/pricing.json` overrides + defaults).
 pub fn base_input_usd_per_m(model: &str, agent: &str) -> f64 {
-    let m = model.to_ascii_lowercase();
-    if m.contains("opus") {
-        15.0
-    } else if m.contains("haiku") {
-        0.80
-    } else if m.contains("sonnet") || agent == "claude" {
-        3.0
-    } else if m.contains("flash-lite") || m.contains("flash_lite") {
-        0.10
-    } else if m.contains("flash") {
-        0.30
-    } else if m.contains("gemini") || agent == "gemini" || agent == "antigravity" {
-        1.25
-    } else if m.contains("mini") || m.contains("nano") {
-        0.25
-    } else if m.contains("codex") || m.contains("gpt") || agent == "codex" {
-        1.50
-    } else {
-        2.0
-    }
+    crate::pricing::resolve_base_usd_per_m(model, agent)
 }
 
 #[derive(Debug, Clone)]
@@ -126,9 +107,96 @@ pub struct SessionMetrics {
     pub agent: String,
     pub is_sidechain: bool,
     pub mtime_secs: u64,
+    pub project_hints: Vec<String>,
     pub turns: Vec<TurnUsage>,
     pub observations: Vec<ToolObservation>,
     pub duplicate_api_lines_skipped: usize,
+}
+
+fn normalize_path_str(raw: &str) -> String {
+    let s = raw.trim().replace('\\', "/");
+    let stripped = s.strip_prefix("//?/").unwrap_or(&s);
+    stripped.trim_end_matches('/').to_ascii_lowercase()
+}
+
+fn claude_project_slug(norm_path: &str) -> String {
+    norm_path
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
+        .collect()
+}
+
+fn push_hint(hints: &mut Vec<String>, raw: &str) {
+    let norm = normalize_path_str(raw);
+    if norm.len() >= 2 && hints.len() < 12 && !hints.contains(&norm) {
+        hints.push(norm);
+    }
+}
+
+/// Extract leaf project directory name from normalized workspace hints (never exposes full user paths).
+fn infer_project_label(hints: &[String]) -> String {
+    for h in hints {
+        // Look for standard repo parent directories like `/projects/<repo>` or `/code/<repo>` or `/repos/<repo>`
+        let parts: Vec<&str> = h.split('/').filter(|p| !p.is_empty()).collect();
+        for (i, seg) in parts.iter().enumerate() {
+            if matches!(
+                *seg,
+                "projects" | "project" | "repos" | "repo" | "code" | "src" | "workspace" | "workspaces" | "dev" | "github"
+            ) && i + 1 < parts.len()
+            {
+                let cand = parts[i + 1];
+                if !cand.contains('.') {
+                    return cand.to_string();
+                }
+            }
+        }
+        // Fallback: if hint looks like a directory (last segment has no file extension)
+        if let Some(&last) = parts.last() {
+            if !last.contains('.') && last.len() >= 2 && !matches!(last, "users" | "home" | "tmp" | "temp") {
+                // Handle Claude slug like `g--projects-efficient-ai`
+                if let Some(after) = last.split("--projects-").nth(1) {
+                    return after.to_string();
+                }
+                return last.to_string();
+            }
+        }
+    }
+    "other".to_string()
+}
+
+impl SessionMetrics {
+    pub fn matches_project(&self, project_dir: &Path) -> bool {
+        let resolved = fs::canonicalize(project_dir).unwrap_or_else(|_| project_dir.to_path_buf());
+        let norm_target = normalize_path_str(&resolved.display().to_string());
+        if norm_target.is_empty() {
+            return false;
+        }
+        let slug = claude_project_slug(&norm_target);
+        let base = resolved
+            .file_name()
+            .map(|n| n.to_string_lossy().to_ascii_lowercase())
+            .unwrap_or_default();
+
+        for h in &self.project_hints {
+            if h == &norm_target || h.starts_with(&format!("{}/", norm_target)) {
+                return true;
+            }
+            if !slug.is_empty() && (h == &slug || h.ends_with(&slug)) {
+                return true;
+            }
+            if base.len() >= 3
+                && (h.ends_with(&format!("/{}", base))
+                    || h.contains(&format!("/{}/", base)))
+            {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn primary_project_label(&self) -> String {
+        infer_project_label(&self.project_hints)
+    }
 }
 
 /// Howard Hinnant's civil-from-days algorithm: convert Unix timestamp (seconds) to `YYYY-MM-DD` (UTC).
@@ -381,10 +449,28 @@ pub fn parse_claude_str(raw: &str, id_seed: &str, is_sub_file: bool) -> SessionM
         agent: "claude".into(),
         is_sidechain: is_sub_file,
         mtime_secs: 0,
+        project_hints: Vec::new(),
         turns: Vec::new(),
         observations: Vec::new(),
         duplicate_api_lines_skipped: 0,
     };
+    // Capture Claude encoded project directory slug from transcript path
+    if let Some(parent_name) = Path::new(id_seed)
+        .parent()
+        .and_then(|p| {
+            if p.file_name().and_then(|n| n.to_str()) == Some("subagents") {
+                p.parent().and_then(|gp| gp.parent())
+            } else {
+                Some(p)
+            }
+        })
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+    {
+        if !parent_name.is_empty() && parent_name != "projects" {
+            push_hint(&mut session.project_hints, parent_name);
+        }
+    }
 
     let mut turn_id_to_idx: HashMap<String, usize> = HashMap::new();
     let mut tool_meta: HashMap<String, (usize, String, String, bool, bool)> = HashMap::new();
@@ -401,6 +487,9 @@ pub fn parse_claude_str(raw: &str, id_seed: &str, is_sub_file: bool) -> SessionM
         };
         if obj.get("isSidechain").and_then(|v| v.as_bool()) == Some(true) {
             session.is_sidechain = true;
+        }
+        if let Some(cwd_s) = obj.get("cwd").and_then(|v| v.as_str()) {
+            push_hint(&mut session.project_hints, cwd_s);
         }
         let rec_type = obj.get("type").and_then(|v| v.as_str()).unwrap_or("");
 
@@ -537,6 +626,7 @@ pub fn parse_antigravity_str(raw: &str, id_seed: &str) -> SessionMetrics {
         agent: "antigravity".into(),
         is_sidechain: false,
         mtime_secs: 0,
+        project_hints: Vec::new(),
         turns: Vec::new(),
         observations: Vec::new(),
         duplicate_api_lines_skipped: 0,
@@ -590,6 +680,15 @@ pub fn parse_antigravity_str(raw: &str, id_seed: &str) -> SessionMetrics {
             if let Some(tcs) = obj.get("tool_calls").and_then(|v| v.as_array()) {
                 for tc in tcs {
                     let tname = tc.get("name").and_then(|v| v.as_str()).unwrap_or("unknown");
+                    if let Some(arg_map) = tc.get("args").and_then(|v| v.as_object()) {
+                        for key in ["Path", "TargetFile", "SearchPath", "DirectoryPath", "Cwd", "cwd", "file_path"] {
+                            if let Some(p_str) = arg_map.get(key).and_then(|v| v.as_str()) {
+                                if !p_str.contains(".gemini") && !p_str.contains(".claude") {
+                                    push_hint(&mut session.project_hints, p_str);
+                                }
+                            }
+                        }
+                    }
                     let (cat, prog, ranged) = classify_tool(tname, tc.get("args"));
                     let followed_search = cat.starts_with("Read")
                         && last_cat.as_deref().map(|c| c.starts_with("Search")).unwrap_or(false);
@@ -621,6 +720,7 @@ pub fn parse_codex_str(raw: &str, id_seed: &str) -> SessionMetrics {
         agent: "codex".into(),
         is_sidechain: false,
         mtime_secs: 0,
+        project_hints: Vec::new(),
         turns: Vec::new(),
         observations: Vec::new(),
         duplicate_api_lines_skipped: 0,
@@ -646,9 +746,12 @@ pub fn parse_codex_str(raw: &str, id_seed: &str) -> SessionMetrics {
             .unwrap_or(&obj);
         let ptype = payload.get("type").and_then(|v| v.as_str()).unwrap_or("");
 
-        if rtype == "turn_context" || ptype == "turn_context" {
+        if rtype == "turn_context" || ptype == "turn_context" || rtype == "session_meta" {
             if let Some(m) = payload.get("model").and_then(|v| v.as_str()) {
                 model = m.to_string();
+            }
+            if let Some(cwd_s) = payload.get("cwd").and_then(|v| v.as_str()) {
+                push_hint(&mut session.project_hints, cwd_s);
             }
         }
 
@@ -766,14 +869,21 @@ pub fn parse_gemini_str(raw: &str, id_seed: &str) -> SessionMetrics {
         agent: "gemini".into(),
         is_sidechain: false,
         mtime_secs: 0,
+        project_hints: Vec::new(),
         turns: Vec::new(),
         observations: Vec::new(),
         duplicate_api_lines_skipped: 0,
     };
-
     let Ok(data) = serde_json::from_str::<Value>(raw) else {
         return session;
     };
+    if let Some(pr) = data
+        .get("projectRoot")
+        .or_else(|| data.get("cwd"))
+        .and_then(|v| v.as_str())
+    {
+        push_hint(&mut session.project_hints, pr);
+    }
     let messages = data
         .get("messages")
         .and_then(|v| v.as_array())
@@ -1073,6 +1183,15 @@ pub struct AdvisorTip {
 }
 
 #[derive(Debug, Default, Serialize)]
+pub struct ProjectBreakdown {
+    pub sessions: usize,
+    pub turns: usize,
+    pub cache_read: u64,
+    pub total_input: u64,
+    pub estimated_usd: f64,
+}
+
+#[derive(Debug, Default, Serialize)]
 pub struct CorpusSummary {
     pub total_files: usize,
     pub parent_sessions: usize,
@@ -1091,6 +1210,7 @@ pub struct CorpusSummary {
     pub subagent_cost_weighted: f64,
     pub total_estimated_usd: f64,
     pub by_agent: BTreeMap<String, AgentBreakdown>,
+    pub by_project: BTreeMap<String, ProjectBreakdown>,
     pub by_model: BTreeMap<String, ModelBreakdown>,
     pub by_day: BTreeMap<String, DailyBucket>,
     pub calls_by_cat: BTreeMap<String, usize>,
@@ -1170,6 +1290,14 @@ pub fn summarize_corpus(sessions: &[SessionMetrics]) -> CorpusSummary {
         ab.total_input += sess.total_input();
         ab.cost_weighted += cw;
         ab.estimated_usd += usd;
+
+        let proj_lbl = sess.primary_project_label();
+        let pb = s.by_project.entry(proj_lbl).or_default();
+        pb.sessions += 1;
+        pb.turns += t_count;
+        pb.cache_read += sess.cache_read();
+        pb.total_input += sess.total_input();
+        pb.estimated_usd += usd;
 
         if sess.mtime_secs > 0 {
             let date = unix_secs_to_date(sess.mtime_secs);
@@ -1516,6 +1644,7 @@ pub fn format_analyze_markdown(s: &CorpusSummary) -> String {
 
 pub fn cmd_analyze(args: &[String]) -> i32 {
     let mut path_arg: Option<PathBuf> = None;
+    let mut project_filter: Option<PathBuf> = None;
     let mut agent = "auto".to_string();
     let mut since_days: Option<u64> = None;
     let mut json_out = false;
@@ -1527,6 +1656,10 @@ pub fn cmd_analyze(args: &[String]) -> i32 {
                 agent = args[i + 1].clone();
                 i += 1;
             }
+            "--project" | "-p" if i + 1 < args.len() => {
+                project_filter = Some(PathBuf::from(&args[i + 1]));
+                i += 1;
+            }
             "--since" if i + 1 < args.len() => {
                 since_days = parse_since_days(&args[i + 1]);
                 i += 1;
@@ -1534,7 +1667,7 @@ pub fn cmd_analyze(args: &[String]) -> i32 {
             "--json" => json_out = true,
             "-h" | "--help" => {
                 println!(
-                    "Usage: eai analyze [path] [--agent auto|claude|antigravity|codex|gemini] [--since 14d] [--json]\n\
+                    "Usage: eai analyze [path] [--project <dir>] [--agent auto|claude|antigravity|codex|gemini] [--since 14d] [--json]\n\
                      Auto-discovers Claude Code, Antigravity, Codex CLI, and Gemini CLI transcripts when [path] is omitted."
                 );
                 return 0;
@@ -1552,13 +1685,16 @@ pub fn cmd_analyze(args: &[String]) -> i32 {
         }
     }
 
-    let sessions = load_sessions_window(path_arg.as_deref(), &agent, since_days, None);
+    let mut sessions = load_sessions_window(path_arg.as_deref(), &agent, since_days, None);
+    if let Some(ref pf) = project_filter {
+        sessions.retain(|s| s.matches_project(pf));
+    }
     let summary = summarize_corpus(&sessions);
 
     if json_out {
         println!("{}", serde_json::to_string_pretty(&summary).unwrap_or_default());
     } else if summary.total_files == 0 {
-        println!("No transcripts found for agent filter '{}'. Pass a path explicitly or start an agent session first.", agent);
+        println!("No matching transcripts found for filter (agent='{}').", agent);
     } else {
         print!("{}", format_analyze_markdown(&summary));
     }
@@ -2031,5 +2167,19 @@ mod tests {
     #[test]
     fn test_all_four_agent_fixtures() {
         run_embedded_selftest().expect("all 4 agent fixtures must pass");
+    }
+
+    #[test]
+    fn test_per_project_attribution_matching() {
+        let claude_fx = r#"{"type":"user","cwd":"G:\\Projects\\efficient-ai","message":{"content":"hi"}}"#;
+        let c = parse_claude_str(claude_fx, "C:\\Users\\dev\\.claude\\projects\\G--Projects-efficient-ai\\s1.jsonl", false);
+        assert!(c.matches_project(Path::new("G:/Projects/efficient-ai")));
+        assert!(!c.matches_project(Path::new("G:/Projects/other-repo")));
+        assert_eq!(c.primary_project_label(), "efficient-ai");
+
+        let agy_fx = r#"{"type":"PLANNER_RESPONSE","input_tokens":100,"cache_read_tokens":0,"output_tokens":10,"tool_calls":[{"name":"read_file","args":{"Path":"G:\\Projects\\my-saas\\src\\app.ts"}}]}"#;
+        let a = parse_antigravity_str(agy_fx, "s2.jsonl");
+        assert!(a.matches_project(Path::new("G:/Projects/my-saas")));
+        assert_eq!(a.primary_project_label(), "my-saas");
     }
 }

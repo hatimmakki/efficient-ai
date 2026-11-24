@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 440" width="880" height="440" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#625DF5" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#F6F7FB" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5B54FA"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-6%" width="108%" height="116%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#151531" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <rect width="880" height="440" rx="22" fill="#F6F7FB"/>
+  <rect width="880" height="440" rx="22" fill="url(#glow)"/>
+  <rect x="1" y="1" width="878" height="438" rx="21" fill="none" stroke="#E2E5F1" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <rect x="34" y="28" width="10" height="36" rx="5" fill="url(#accent)"/>
+  <text x="56" y="47" font-size="22" font-weight="800" fill="#151531">efficient-ai</text>
+  <text x="188" y="47" font-size="14" font-weight="600" fill="#5B54FA">Same quality, fewer tokens</text>
+  <text x="56" y="68" font-size="12.5" fill="#5E6478">30-Day Verified AI Efficiency Proof · 3 Sessions · 259 Turns</text>
+
+  <rect x="556" y="30" width="290" height="32" rx="16" fill="#FFFFFF" stroke="#E2E5F1"/>
+  <text x="701" y="51" font-size="11.5" font-weight="600" fill="#3B4058" text-anchor="middle">Antigravity</text>
+
+  <!-- 4 KPI Tiles -->
+  <g filter="url(#shadow)">
+    <rect x="34" y="92" width="192" height="108" rx="14" fill="#FFFFFF"/>
+    <text x="52" y="118" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="0.6">RE-SENT TOKENS AVOIDED</text>
+    <text x="52" y="156" font-size="30" font-weight="800" fill="#5B54FA">5.2M</text>
+    <text x="52" y="180" font-size="11.5" fill="#10B981" font-weight="600">206.7k direct saved (~$1.70)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="241" y="92" width="192" height="108" rx="14" fill="#FFFFFF"/>
+    <text x="259" y="118" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="0.6">PROMPT-CACHE HIT RATE</text>
+    <text x="259" y="156" font-size="30" font-weight="800" fill="#151531">94.4%</text>
+    <text x="259" y="180" font-size="11.5" fill="#10B981" font-weight="600">Prefix stability protected</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="448" y="92" width="192" height="108" rx="14" fill="#FFFFFF"/>
+    <text x="466" y="118" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="0.6">TARGETED READ RATIO</text>
+    <text x="466" y="156" font-size="30" font-weight="800" fill="#151531">11%</text>
+    <text x="466" y="180" font-size="11.5" fill="#5E6478">Idle prefix: 122 tok/turn</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="655" y="92" width="191" height="108" rx="14" fill="#FFFFFF"/>
+    <text x="673" y="118" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="0.6">RECOVERY RATE</text>
+    <text x="673" y="156" font-size="30" font-weight="800" fill="#10B981">0.0%</text>
+    <text x="673" y="180" font-size="11.5" fill="#5E6478">0 stuck loops intercepted</text>
+  </g>
+
+  <!-- Efficiency Breakdown Panel -->
+  <g filter="url(#shadow)">
+    <rect x="34" y="220" width="812" height="162" rx="16" fill="#FFFFFF"/>
+    <text x="56" y="250" font-size="13.5" font-weight="700" fill="#151531">Layer Impact Breakdown (Privacy-Sanitized Telemetry)</text>
+
+    <text x="56" y="284" font-size="12" font-weight="600" fill="#3B4058">outline (Reads)</text>
+    <rect x="210" y="272" width="320" height="14" rx="7" fill="#EEF0FA"/>
+    <rect x="210" y="272" width="320" height="14" rx="7" fill="#5B54FA"/>
+    <text x="548" y="284" font-size="12" font-weight="700" fill="#151531">34 calls · 206.7k tok saved</text>
+
+    <text x="56" y="318" font-size="12" font-weight="600" fill="#3B4058">squeeze (Streams)</text>
+    <rect x="210" y="306" width="320" height="14" rx="7" fill="#EEF0FA"/>
+    <rect x="210" y="306" width="12" height="14" rx="7" fill="#10B981"/>
+    <text x="548" y="318" font-size="12" font-weight="700" fill="#151531">0 runs · 0 tok (0 lines elided)</text>
+
+    <text x="56" y="352" font-size="12" font-weight="600" fill="#3B4058">Cache Efficiency</text>
+    <rect x="210" y="340" width="320" height="14" rx="7" fill="#EEF0FA"/>
+    <rect x="210" y="340" width="302" height="14" rx="7" fill="#8B5CF6"/>
+    <text x="548" y="352" font-size="12" font-weight="700" fill="#151531">94.4% cache hits · 12 hook flag rewrites</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="36" y="414" font-size="11.5" fill="#6B7280">100% local &amp; privacy-sanitized · Zero code, file paths, or prompts included</text>
+  <text x="844" y="414" font-size="11.5" font-weight="700" fill="#5B54FA" text-anchor="end">github.com/hatimmakki/efficient-ai</text>
+</svg>

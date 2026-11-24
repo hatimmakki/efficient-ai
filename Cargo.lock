@@ -91,7 +91,7 @@ checksum = "a31eee39dddec8330830986fcd7625edb5a24ec90ea038215273bbc3adb08ac6"
 
 [[package]]
 name = "eai"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "outline",
  "serde",
@@ -243,7 +243,7 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "outline"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "ignore",
  "tree-sitter",
@@ -425,7 +425,7 @@ checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
 
 [[package]]
 name = "squeeze"
-version = "1.0.0"
+version = "1.1.0"
 
 [[package]]
 name = "streaming-iterator"

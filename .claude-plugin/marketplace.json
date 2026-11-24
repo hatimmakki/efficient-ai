@@ -8,7 +8,7 @@
     {
       "name": "efficient-ai",
       "description": "Same quality, fewer tokens: unified eai binary, tokscope session profiler, outline structure-aware reader, squeeze lossless output wrapper, and sub-10ms PreToolUse hooks.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "source": "./",
       "author": {
         "name": "Hatim Makki"
