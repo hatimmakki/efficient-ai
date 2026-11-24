@@ -11,13 +11,13 @@ Thank you for contributing to `efficient-ai`! Our goal is rigorous, reproducible
    - New compression or prompt techniques must report impact on **total session tokens** and **cost-weighted tokens** (accounting for prompt-cache writes vs. reads), not just single-stream byte counts.
 3. **Run the verification suite before opening a PR:**
    ```bash
-   # Python tests & multi-agent fixture self-test
-   .venv/bin/python -m unittest discover -s tools/tokscope/tests -v
-   .venv/bin/tokscope selftest
+   # Rust workspace tests, lint, & multi-agent fixture self-test
+   cargo test --workspace
+   cargo clippy --workspace --all-targets -- -D warnings
+   cargo run -p eai -- selftest
 
-   # Rust tools
-   cargo test --manifest-path tools/outline/Cargo.toml
-   cargo test --manifest-path tools/squeeze/Cargo.toml
+   # Python tests (tokscope, hooks, & plugin manifest validation)
+   python -m unittest discover -s tools/tokscope/tests -v
    ```
 
 ## Developer Certificate of Origin (DCO)

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/claude_pre_tool.py\""
+            "command": "sh -c 'if command -v eai >/dev/null 2>&1; then exec eai hook claude; elif [ -x \"$HOME/.eai/bin/eai\" ]; then exec \"$HOME/.eai/bin/eai\" hook claude; elif command -v python3 >/dev/null 2>&1; then exec python3 \"$1\" claude; else exec python \"$1\" claude; fi' -- \"${CLAUDE_PLUGIN_ROOT}/hooks/eai_hook.py\""
           }
         ]
       }

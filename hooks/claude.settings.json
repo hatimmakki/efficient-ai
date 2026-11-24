@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python hooks/claude_pre_tool.py"
+            "command": "eai hook claude"
           }
         ]
       }

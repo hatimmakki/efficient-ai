@@ -38,6 +38,13 @@ DEFAULT_WEIGHTS = {
         "cache_read": 0.25,
         "output": 4.0,
     },
+    "antigravity": {
+        "uncached_input": 1.0,
+        "cache_write_5m": 1.0,
+        "cache_write_1h": 1.0,
+        "cache_read": 0.25,
+        "output": 4.0,
+    },
 }
 
 

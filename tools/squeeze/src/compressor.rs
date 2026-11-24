@@ -4,7 +4,7 @@
 //! 3. Elides passing test / build progress lines while preserving 100% of errors,
 //!    tracebacks, warnings, and summary lines.
 //! 4. Returns `(compressed_text, lines_elided)` so the caller can spill the raw
-//!    output to `.eai/logs/last.log` and append a one-line recovery pointer.
+//!    output to `.eai/logs/<id>.log` and append a one-line recovery pointer.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompressResult {
@@ -18,11 +18,7 @@ pub struct CompressResult {
 pub fn clean_ansi_and_cr(input: &str) -> String {
     let mut cleaned_lines = Vec::new();
     for raw_line in input.split('\n') {
-        let line_no_cr = if let Some( trimmed_cr ) = raw_line.strip_suffix('\r') {
-            trimmed_cr
-        } else {
-            raw_line
-        };
+        let line_no_cr = raw_line.strip_suffix('\r').unwrap_or(raw_line);
         // If line contains internal `\r` (spinner / progress bar overwrite), keep only the final segment
         let final_seg = line_no_cr.rsplit('\r').next().unwrap_or(line_no_cr);
         cleaned_lines.push(strip_ansi_line(final_seg));
@@ -77,6 +73,8 @@ fn is_elidable_passing_or_progress(trimmed: &str) -> bool {
         "assert",
         "summary",
         "short test summary",
+        "fatal",
+        "segmentation",
     ] {
         if lower.contains(keep_kw) {
             return false;
@@ -87,28 +85,40 @@ fn is_elidable_passing_or_progress(trimmed: &str) -> bool {
     if trimmed.contains("::") && (trimmed.contains(" PASSED") || trimmed.ends_with("PASSED")) {
         return true;
     }
+    // Python unittest verbose passing line: `test_foo (module.TestBar) ... ok`
+    if trimmed.starts_with("test_") && trimmed.ends_with(" ... ok") {
+        return true;
+    }
     // Rust cargo test passing line: `test foo::bar ... ok`
     if trimmed.starts_with("test ") && trimmed.ends_with(" ... ok") {
         return true;
     }
-    // Cargo / npm / pip build download/compile progress
+    // Go test verbose passing lines: `=== RUN   TestFoo` / `--- PASS: TestFoo (0.00s)`
+    if trimmed.starts_with("=== RUN") || trimmed.starts_with("--- PASS:") {
+        return true;
+    }
+    // Cargo / npm / pip / pnpm / docker build download & compile progress
     for prefix in [
         "Downloading ",
         "Downloaded ",
         "Compiling ",
+        "Checking ",
         "Fresh ",
         "Locking ",
         "Unpacking ",
+        "Updating crates.io",
         "Requirement already satisfied:",
         "Using cached ",
+        "Collecting ",
+        "PASS ",
+        "✓ ",
+        "√ ",
+        "✔ ",
+        "ok   ",
     ] {
         if trimmed.starts_with(prefix) {
             return true;
         }
-    }
-    // Jest / Vitest passing line: `✓ should do x (4 ms)` or `PASS src/foo.test.ts`
-    if trimmed.starts_with("✓ ") || trimmed.starts_with("√ ") {
-        return true;
     }
 
     false
@@ -197,6 +207,24 @@ E   AssertionError: expected 42 got 41
         assert!(res.output.contains("test_3 FAILED"));
         assert!(res.output.contains("AssertionError: expected 42 got 41"));
         assert!(!res.output.contains("test_1 PASSED"));
+    }
+
+    #[test]
+    fn test_go_and_vitest_elided_errors_kept() {
+        let raw = "\
+=== RUN   TestAlpha
+--- PASS: TestAlpha (0.01s)
+=== RUN   TestBeta
+--- FAIL: TestBeta (0.02s)
+    beta_test.go:18: expected 5 got 4
+PASS src/utils.test.ts
+✓ formats numbers (2 ms)
+FAIL";
+        let res = compress_stream(raw, 200);
+        assert!(res.elided_lines >= 5);
+        assert!(res.output.contains("--- FAIL: TestBeta"));
+        assert!(res.output.contains("expected 5 got 4"));
+        assert!(!res.output.contains("--- PASS: TestAlpha"));
     }
 
     #[test]

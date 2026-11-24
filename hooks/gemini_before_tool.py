@@ -1,35 +1,16 @@
-"""Gemini CLI BeforeTool hook adapter for efficient-ai."""
+"""Gemini CLI BeforeTool/AfterTool hook adapter (delegates to unified hooks/eai_hook.py)."""
 
 from __future__ import annotations
 
-import json
 import sys
+from pathlib import Path
 
-from claude_pre_tool import rewrite_shell_cmd
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from eai_hook import rewrite_shell_cmd, run_hook  # noqa: E402,F401
 
 
 def main() -> int:
-    try:
-        payload = json.load(sys.stdin)
-    except Exception:
-        return 0
-
-    tool_name = payload.get("tool_name") or ""
-    tool_input = payload.get("tool_input") or {}
-    if not isinstance(tool_input, dict):
-        return 0
-
-    if tool_name in ("run_shell_command", "shell", "bash"):
-        orig_cmd = str(tool_input.get("command") or "")
-        new_cmd = rewrite_shell_cmd(orig_cmd)
-        if new_cmd != orig_cmd:
-            updated = dict(tool_input)
-            updated["command"] = new_cmd
-            json.dump({"decision": "allow", "tool_input": updated}, sys.stdout)
-            return 0
-
-    json.dump({"decision": "allow"}, sys.stdout)
-    return 0
+    return run_hook("gemini")
 
 
 if __name__ == "__main__":

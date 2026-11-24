@@ -1,25 +1,22 @@
-# `hooks/` — Portable Agent Interception Adapters
+# `hooks/` — Portable Multi-Agent Interception Adapters
 
 As documented in [`docs/research/01-agent-surfaces.md`](../docs/research/01-agent-surfaces.md):
-- **Claude Code** supports `PreToolUse` argument rewriting (`updatedInput`) for `Bash` and `Read`.
-- **Gemini CLI** supports `BeforeTool` argument rewriting (`tool_input`) and `AfterTool` replacement.
-- **Codex CLI** rejects `updatedInput` in `PreToolUse` hooks; intercepting commands via `deny` costs an extra turn (triggering a recovery loop).
+- **Claude Code** supports `PreToolUse` argument rewriting (`updatedInput`) for `Bash`, `PowerShell`, and `Read`.
+- **Antigravity** supports camelCase `PreToolUse` `overwrite` on `run_command` (`CommandLine`) and `read_file` via root [`hooks.json`](../hooks.json) or `.agents/hooks.json`.
+- **Gemini CLI** supports both `BeforeTool` argument rewriting (`tool_input`) and `AfterTool` lossless response compression.
+- **Codex CLI** rejects `updatedInput` in `PreToolUse` hooks; therefore `eai init` installs executable `PATH` shims in `.eai/shims/` (zero extra turns).
 
-Therefore, we provide **two interception layers**:
-1. **Primary (All 3 Agents, including Codex CLI): Portable `PATH` Shims** via `squeeze --install-shims .eai/shims`. Prepending `.eai/shims` to `PATH` wraps `pytest`, `cargo`, and `npm` transparently with zero extra turns.
-2. **Secondary (Claude Code & Gemini CLI): Pre-Tool Rewrite Hooks** (`claude_pre_tool.py` and `gemini_before_tool.py`) that inject compact **H8** flags (`git status -sb`, `git log --oneline -n 15`, `git --no-pager diff`, `pytest -q --tb=short`) and nudge on whole-file reads $>350$ lines.
+## Automatic Setup (Recommended)
 
-## Setup
+Run `eai init` (project) or `eai init --global` to wire native sub-10ms Rust hooks (`eai hook <agent>`) cleanly with automatic backups and idempotent JSON merging:
 
-### 1. Portable `PATH` Shims (Claude Code, Codex CLI, Gemini CLI)
 ```bash
-cargo build --release --manifest-path tools/squeeze/Cargo.toml
-./tools/squeeze/target/release/squeeze --install-shims .eai/shims
-export PATH="$PWD/.eai/shims:$PATH"   # PowerShell: $env:PATH = "$PWD\.eai\shims;$env:PATH"
+eai init            # Wires Claude Code, Antigravity, Gemini CLI & Codex shims for the current project
+eai init --global   # Wires global configs (~/.claude, ~/.gemini/config, ~/.gemini, ~/.eai/shims)
+eai doctor          # Verifies hook wiring & <10ms round-trip latency
+eai uninstall       # Cleanly removes efficient-ai entries without touching your other hooks
 ```
 
-### 2. Claude Code Hook (`.claude/settings.json`)
-Merge [`claude.settings.json`](claude.settings.json) into `.claude/settings.json`.
-
-### 3. Gemini CLI Hook (`.gemini/settings.json`)
-Merge [`gemini.settings.json`](gemini.settings.json) into `.gemini/settings.json`.
+## Architecture
+- **Fast path (`<10ms`):** `eai hook <claude|antigravity|gemini>` runs inside the compiled Rust binary, rewriting commands using the exact resolved `eai` executable path (never failing with `command not found`), tracking `.eai/logs/` recovery rate, and keeping `Read` nudges compact (`~18` tokens, no double-tax).
+- **Zero-dep marketplace fallback:** [`eai_hook.py`](eai_hook.py) delegates to `eai hook <agent>` whenever installed and otherwise falls back cleanly to pure Python 3.10+.

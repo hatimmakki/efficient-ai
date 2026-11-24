@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "tools/outline",
+    "tools/squeeze",
+    "tools/eai",
+]
+resolver = "2"

@@ -3,11 +3,24 @@
   "hooks": {
     "BeforeTool": [
       {
+        "matcher": "run_shell_command|read_file",
+        "hooks": [
+          {
+            "name": "efficient-ai-before",
+            "type": "command",
+            "command": "eai hook gemini"
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
         "matcher": "run_shell_command",
         "hooks": [
           {
+            "name": "efficient-ai-after",
             "type": "command",
-            "command": "python hooks/gemini_before_tool.py"
+            "command": "eai hook gemini"
           }
         ]
       }

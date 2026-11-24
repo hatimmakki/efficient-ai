@@ -30,6 +30,11 @@ class CorpusSummary:
 
     parent_cost_weighted: float = 0.0
     subagent_cost_weighted: float = 0.0
+    uncached_cost_weighted: float = 0.0
+    cache_write_cost_weighted: float = 0.0
+    cache_read_cost_weighted: float = 0.0
+    output_cost_weighted: float = 0.0
+    agents_seen: set[str] = field(default_factory=set)
 
     # Tool attribution: first-occurrence vs cumulative re-sent across remaining turns
     calls_by_cat: Counter[str] = field(default_factory=Counter)
@@ -78,8 +83,21 @@ def summarize_corpus(sessions: list[SessionMetrics]) -> CorpusSummary:
         if sess.turn_count == 0 and not sess.observations:
             continue
         s.total_files += 1
+        s.agents_seen.add(sess.agent)
         s.duplicate_api_lines_skipped += sess.duplicate_api_lines_skipped
         t_count = sess.turn_count
+        w = DEFAULT_WEIGHTS.get(sess.agent, DEFAULT_WEIGHTS["claude"])
+
+        for t in sess.turns:
+            if t.cache_write_5m or t.cache_write_1h:
+                unacc = max(0, t.cache_write - t.cache_write_5m - t.cache_write_1h)
+                cw_c = (t.cache_write_5m + unacc) * w["cache_write_5m"] + t.cache_write_1h * w["cache_write_1h"]
+            else:
+                cw_c = t.cache_write * w["cache_write_5m"]
+            s.uncached_cost_weighted += t.uncached_input * w["uncached_input"]
+            s.cache_write_cost_weighted += cw_c
+            s.cache_read_cost_weighted += t.cache_read * w["cache_read"]
+            s.output_cost_weighted += t.output * w["output"]
 
         if sess.is_sidechain:
             s.subagent_sessions += 1
@@ -126,17 +144,28 @@ def summarize_corpus(sessions: list[SessionMetrics]) -> CorpusSummary:
 
 def format_markdown_report(s: CorpusSummary, agent: str = "claude") -> str:
     """Render a comprehensive Markdown report of token economics and attribution."""
-    w = DEFAULT_WEIGHTS.get(agent, DEFAULT_WEIGHTS["claude"])
-    unaccounted_cw = max(0, s.cache_write - s.cache_write_5m - s.cache_write_1h)
-    cw_cost = (
-        (s.cache_write_5m + unaccounted_cw) * w["cache_write_5m"]
-        + s.cache_write_1h * w["cache_write_1h"]
-    )
-    in_cost = s.uncached_input * w["uncached_input"]
-    cr_cost = s.cache_read * w["cache_read"]
-    out_cost = s.output * w["output"]
+    # Use exact per-session accumulated cost weights (accurate even across mixed-agent corpora!)
+    in_cost = s.uncached_cost_weighted
+    cw_cost = s.cache_write_cost_weighted
+    cr_cost = s.cache_read_cost_weighted
+    out_cost = s.output_cost_weighted
     tot_cost = max(1.0, in_cost + cw_cost + cr_cost + out_cost)
     tot_raw = max(1, s.total_raw_tokens)
+    if len(s.agents_seen) == 1:
+        only_agent = next(iter(s.agents_seen))
+        w = DEFAULT_WEIGHTS.get(only_agent, DEFAULT_WEIGHTS["claude"])
+        weight_desc = (
+            f"`1.0×` = uncached input, `{w['cache_write_5m']}×` = cache write, "
+            f"`{w['cache_read']}×` = cache read, `{w['output']}×` = output ({only_agent})"
+        )
+        cr_lbl = f"Cache read (`{w['cache_read']}×`)"
+        cw_lbl = f"Cache write (`{w['cache_write_5m']}×`)"
+        out_lbl = f"Output + thinking (`{w['output']}×`)"
+    else:
+        weight_desc = "per-agent provider pricing weights (mixed corpus: " + ", ".join(sorted(s.agents_seen) or [agent]) + ")"
+        cr_lbl = "Cache read (per-agent)"
+        cw_lbl = "Cache write (per-agent)"
+        out_lbl = "Output + thinking (per-agent)"
 
     lines = [
         "# tokscope Session Token Economics Report",
@@ -151,13 +180,13 @@ def format_markdown_report(s: CorpusSummary, agent: str = "claude") -> str:
         "",
         "## 2. Raw Tokens vs. Cost-Weighted Tokens",
         "",
-        "*Cost-weighted tokens are expressed in uncached-input-token equivalents (`1.0×` = uncached input, `1.25×/2.0×` = 5m/1h cache write, `0.1×` = cache read, `5.0×` = output).*",
+        f"*Cost-weighted tokens are expressed in uncached-input-token equivalents ({weight_desc}).*",
         "",
         "| Component | Raw Tokens | Share of Raw | Cost-Weighted Tokens | Share of Cost |",
         "|---|---:|---:|---:|---:|",
-        f"| **Cache read (`0.1×`)** | {s.cache_read:,} | {100 * s.cache_read / tot_raw:.2f}% | {cr_cost:,.0f} | **{100 * cr_cost / tot_cost:.1f}%** |",
-        f"| **Cache write (`1.25×` 5m / `2.0×` 1h)** | {s.cache_write:,} | {100 * s.cache_write / tot_raw:.2f}% | {cw_cost:,.0f} | **{100 * cw_cost / tot_cost:.1f}%** |",
-        f"| **Output + thinking (`5.0×`)** | {s.output:,} | {100 * s.output / tot_raw:.2f}% | {out_cost:,.0f} | **{100 * out_cost / tot_cost:.1f}%** |",
+        f"| **{cr_lbl}** | {s.cache_read:,} | {100 * s.cache_read / tot_raw:.2f}% | {cr_cost:,.0f} | **{100 * cr_cost / tot_cost:.1f}%** |",
+        f"| **{cw_lbl}** | {s.cache_write:,} | {100 * s.cache_write / tot_raw:.2f}% | {cw_cost:,.0f} | **{100 * cw_cost / tot_cost:.1f}%** |",
+        f"| **{out_lbl}** | {s.output:,} | {100 * s.output / tot_raw:.2f}% | {out_cost:,.0f} | **{100 * out_cost / tot_cost:.1f}%** |",
         f"| **Uncached input (`1.0×`)** | {s.uncached_input:,} | {100 * s.uncached_input / tot_raw:.3f}% | {in_cost:,.0f} | **{100 * in_cost / tot_cost:.2f}%** |",
         f"| **Total** | **{s.total_raw_tokens:,}** | **100.0%** | **{tot_cost:,.0f}** | **100.0%** |",
         "",

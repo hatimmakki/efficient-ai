@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Rust Workspace Tests
+        run: cargo test --workspace
+
+      - name: Rust Clippy (deny warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Build Release Binary & Run Selftest + Doctor
+        run: |
+          cargo build --release -p eai
+          ./target/release/eai selftest
+          ./target/release/eai doctor
+
+      - name: Python Tests (tokscope, hooks, & plugin manifests)
+        run: python -m unittest discover -s tools/tokscope/tests -v

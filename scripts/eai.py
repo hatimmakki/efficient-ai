@@ -25,9 +25,14 @@ from claude_pre_tool import rewrite_shell_cmd  # noqa: E402
 
 def _rust_bin(name: str) -> Path | None:
     exe = f"{name}.exe" if sys.platform == "win32" else name
-    candidate = REPO_ROOT / "tools" / name / "target" / "release" / exe
-    if candidate.is_file():
-        return candidate
+    for candidate in (
+        REPO_ROOT / "target" / "release" / exe,
+        REPO_ROOT / "tools" / name / "target" / "release" / exe,
+        Path.home() / ".eai" / "bin" / exe,
+        Path.home() / ".cargo" / "bin" / exe,
+    ):
+        if candidate.is_file():
+            return candidate
     which_hit = shutil.which(name)
     return Path(which_hit) if which_hit else None
 
@@ -192,6 +197,12 @@ def cmd_setup(argv: list[str]) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
+
+    # Fast path: delegate directly to the unified compiled Rust `eai` binary when available
+    unified_eai = _rust_bin("eai")
+    if unified_eai is not None:
+        return subprocess.call([str(unified_eai), *args])
+
     if not args or args[0] in ("-h", "--help"):
         print(
             "eai — Unified CLI for efficient-ai\n\n"

@@ -1,7 +1,7 @@
 {
   "name": "efficient-ai",
-  "description": "Same quality, fewer tokens: structure-aware reading (outline), lossless output compression (squeeze), session token profiler (tokscope), and token-budgeted agent policies.",
-  "version": "0.1.0",
+  "description": "Same quality, fewer tokens: unified Rust eai CLI, structure-aware reading (outline), lossless compression (squeeze), multi-agent session profiler (tokscope), and native hooks for Claude Code, Antigravity, Gemini CLI, and Codex.",
+  "version": "0.2.0",
   "author": {
     "name": "Hatim Makki",
     "url": "https://github.com/hatimmakki"
@@ -16,6 +16,7 @@
     "tokscope",
     "outline",
     "squeeze",
+    "antigravity",
     "skills"
   ]
 }

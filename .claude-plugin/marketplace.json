@@ -7,8 +7,8 @@
   "plugins": [
     {
       "name": "efficient-ai",
-      "description": "Same quality, fewer tokens: tokscope session profiler, outline structure-aware reader, squeeze lossless output wrapper, and PreToolUse compact-flag hooks.",
-      "version": "0.1.0",
+      "description": "Same quality, fewer tokens: unified eai binary, tokscope session profiler, outline structure-aware reader, squeeze lossless output wrapper, and sub-10ms PreToolUse hooks.",
+      "version": "0.2.0",
       "source": "./",
       "author": {
         "name": "Hatim Makki"

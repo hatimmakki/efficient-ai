@@ -89,8 +89,8 @@ def classify_tool(name: str, inp: dict | None) -> tuple[str, str, bool]:
     """Return (category, program, is_ranged_read)."""
     inp = inp or {}
     lname = (name or "unknown").lower()
-    if name in ("Bash", "PowerShell") or lname in ("shell", "exec_command", "run_shell_command", "bash"):
-        cmd = inp.get("command") or inp.get("cmd") or ""
+    if name in ("Bash", "PowerShell") or lname in ("shell", "exec_command", "run_shell_command", "run_command", "bash"):
+        cmd = inp.get("command") or inp.get("cmd") or inp.get("CommandLine") or ""
         if isinstance(cmd, list):
             cmd = " ".join(str(x) for x in cmd)
         prog = program_of(str(cmd))
@@ -105,6 +105,8 @@ def classify_tool(name: str, inp: dict | None) -> tuple[str, str, bool]:
             or inp.get("limit")
             or inp.get("start_line")
             or inp.get("end_line")
+            or inp.get("StartLine")
+            or inp.get("EndLine")
         )
         return "Read (tool)", "", ranged
     if name in ("Grep", "Glob", "grep_search", "find_by_name", "search_files"):
@@ -469,12 +471,92 @@ def parse_gemini_json(path: Path) -> SessionMetrics:
     return session
 
 
+def parse_antigravity_jsonl(path: Path) -> SessionMetrics:
+    """Parse an Antigravity transcript.jsonl (PLANNER_RESPONSE + sequential GENERIC tool outputs).
+
+    In Antigravity transcripts, `input_tokens` (uncached) and `cache_read_tokens` are disjoint.
+    """
+    session = SessionMetrics(
+        session_id=anonymize_id(str(path)),
+        agent="antigravity",
+        is_sidechain=False,
+    )
+    pending_tools: list[tuple[int, str, str, bool, bool]] = []
+    pending_cursor = 0
+    last_cat: str | None = None
+
+    with path.open(encoding="utf-8", errors="ignore") as f_in:
+        for raw_line in f_in:
+            raw_line = raw_line.strip()
+            if not raw_line:
+                continue
+            try:
+                obj = json.loads(raw_line)
+            except json.JSONDecodeError:
+                continue
+
+            stype = obj.get("type")
+            if stype == "PLANNER_RESPONSE":
+                inp = int(obj.get("input_tokens") or 0)
+                cr = int(obj.get("cache_read_tokens") or 0)
+                out = int(obj.get("output_tokens") or 0)
+                thinking_tok = count_tokens(str(obj.get("thinking") or ""))
+                idx = len(session.turns)
+                if inp > 0 or cr > 0 or out > 0:
+                    session.turns.append(
+                        TurnUsage(
+                            turn_index=idx,
+                            turn_id=f"agy-turn-{idx}",
+                            model=str(obj.get("model") or "antigravity"),
+                            uncached_input=inp,
+                            cache_write=0,
+                            cache_read=cr,
+                            output=out,
+                            reasoning=thinking_tok,
+                        )
+                    )
+                pending_tools = []
+                pending_cursor = 0
+                for tc in obj.get("tool_calls") or []:
+                    if not isinstance(tc, dict):
+                        continue
+                    tname = str(tc.get("name") or "unknown")
+                    tinp = tc.get("args") if isinstance(tc.get("args"), dict) else {}
+                    cat, prog, ranged = classify_tool(tname, tinp)
+                    followed_search = bool(
+                        cat.startswith("Read") and last_cat and last_cat.startswith("Search")
+                    )
+                    pending_tools.append((idx, cat, prog, ranged, followed_search))
+                    last_cat = cat
+            elif stype == "GENERIC" and pending_cursor < len(pending_tools):
+                t_idx, cat, prog, ranged, followed_search = pending_tools[pending_cursor]
+                pending_cursor += 1
+                session.observations.append(
+                    ToolObservation(
+                        turn_index=t_idx,
+                        category=cat,
+                        program=prog,
+                        tokens=count_tokens(extract_text(obj.get("content"))),
+                        is_ranged_read=ranged,
+                        followed_search=followed_search,
+                    )
+                )
+            elif stype == "USER_INPUT":
+                utok = count_tokens(extract_text(obj.get("content")))
+                if utok > 0:
+                    session.user_prompt_tokens.append((max(0, len(session.turns) - 1), utok))
+
+    return session
+
+
 def detect_and_parse(path: Path, agent: str = "auto") -> SessionMetrics | None:
     """Detect transcript agent type and parse into SessionMetrics."""
     if not path.is_file():
         return None
     if agent == "claude":
         return parse_claude_jsonl(path)
+    if agent == "antigravity":
+        return parse_antigravity_jsonl(path)
     if agent == "codex":
         return parse_codex_jsonl(path)
     if agent == "gemini":
@@ -491,6 +573,10 @@ def detect_and_parse(path: Path, agent: str = "auto") -> SessionMetrics | None:
         return None
 
     if suffix == ".jsonl":
+        if name == "transcript_full.jsonl":
+            return None
+        if name == "transcript.jsonl" or "antigravity" in str(path).lower():
+            return parse_antigravity_jsonl(path)
         if ".codex" in parts_lower or name.startswith("rollout-"):
             return parse_codex_jsonl(path)
         if ".claude" in parts_lower:
@@ -503,6 +589,8 @@ def detect_and_parse(path: Path, agent: str = "auto") -> SessionMetrics | None:
                     if not line:
                         continue
                     obj = json.loads(line)
+                    if obj.get("type") in ("PLANNER_RESPONSE", "USER_INPUT"):
+                        return parse_antigravity_jsonl(path)
                     if "event_msg" in line or obj.get("type") in ("session_meta", "turn_context", "token_count"):
                         return parse_codex_jsonl(path)
                     return parse_claude_jsonl(path)

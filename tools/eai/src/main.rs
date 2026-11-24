@@ -1,0 +1,84 @@
+//! `eai` — Unified zero-dependency CLI for efficient-ai.
+
+mod hooks;
+mod setup;
+mod telemetry;
+mod tokscope;
+
+use std::env;
+use std::path::PathBuf;
+use std::process::ExitCode;
+
+fn print_help() {
+    println!(
+        "eai {} — Same quality, fewer tokens (Claude Code, Antigravity, Gemini CLI, Codex)\n\
+         \n\
+         USAGE:\n\
+         \x20 eai init [--project <dir>] [--global] [--agents auto|claude,antigravity,gemini,codex]\n\
+         \x20 eai doctor [--project <dir>]                     Verify hooks, shims, latency & prefix health\n\
+         \x20 eai analyze [path] [--agent auto] [--json]       Multi-agent token, cache & USD cost profiler\n\
+         \x20 eai audit [path] [--include-user] [--json]       Audit static prefix (AGENTS.md, skills, MCP)\n\
+         \x20 eai stats [--project <dir>] [--global] [--json]  Local savings, recovery rate & baseline report\n\
+         \x20 eai outline <file|search> [...]                  Structure-aware outlines & symbol reads\n\
+         \x20 eai squeeze [--max-lines N] -- <cmd> [args...]   Lossless compression, spill log & loop guard\n\
+         \x20 eai hook <claude|antigravity|gemini>             Sub-10ms native agent hook router (stdin JSON)\n\
+         \x20 eai sanitize [path] --out <file.json>            Export privacy-safe aggregate session JSON\n\
+         \x20 eai selftest                                     Verify all 4 agent parsers on synthetic fixtures\n\
+         \x20 eai uninstall [--project <dir>] [--global]       Cleanly remove efficient-ai hooks & shims",
+        env!("CARGO_PKG_VERSION")
+    );
+}
+
+fn main() -> ExitCode {
+    let args: Vec<String> = env::args().skip(1).collect();
+    if args.is_empty() || matches!(args[0].as_str(), "-h" | "--help" | "help") {
+        print_help();
+        return ExitCode::SUCCESS;
+    }
+    if matches!(args[0].as_str(), "-V" | "--version" | "version") {
+        println!("eai {}", env!("CARGO_PKG_VERSION"));
+        return ExitCode::SUCCESS;
+    }
+
+    let sub = args[0].as_str();
+    let rest = &args[1..];
+    let cwd = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+
+    match sub {
+        "outline" => {
+            let (code, metrics) = outline::run_cli(rest);
+            if let Some(m) = metrics {
+                telemetry::record_outline(&cwd, m.action, m.raw_chars, m.output_chars);
+            }
+            code
+        }
+        "squeeze" => {
+            let (code, metrics) = squeeze::run_cli(rest);
+            if let Some(m) = metrics {
+                telemetry::record_squeeze(
+                    &cwd,
+                    &m.command,
+                    m.raw_chars,
+                    m.kept_chars,
+                    m.elided_lines,
+                    m.log_path.is_some(),
+                    m.loop_detected,
+                );
+            }
+            code
+        }
+        "hook" => ExitCode::from(hooks::cmd_hook(rest) as u8),
+        "analyze" => ExitCode::from(tokscope::cmd_analyze(rest) as u8),
+        "audit" => ExitCode::from(tokscope::cmd_audit(rest) as u8),
+        "sanitize" => ExitCode::from(tokscope::cmd_sanitize(rest) as u8),
+        "selftest" => ExitCode::from(tokscope::cmd_selftest() as u8),
+        "init" | "setup" => ExitCode::from(setup::cmd_init(rest) as u8),
+        "doctor" => ExitCode::from(setup::cmd_doctor(rest) as u8),
+        "stats" => ExitCode::from(telemetry::cmd_stats(rest) as u8),
+        "uninstall" => ExitCode::from(setup::cmd_uninstall(rest) as u8),
+        other => {
+            eprintln!("Unknown command '{}'. Run `eai --help` for usage.", other);
+            ExitCode::from(2)
+        }
+    }
+}

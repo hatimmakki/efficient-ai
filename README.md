@@ -2,7 +2,7 @@
 
 **Same quality, fewer tokens.**
 
-`efficient-ai` is an open research project and toolkit for cutting the token and API cost of AI coding agents—with **Claude Code**, **Codex CLI**, and **Gemini CLI** supported as first-class targets from day one.
+`efficient-ai` is an open research project and zero-dependency Rust toolkit (`eai`) for cutting the token and API cost of AI coding agents—with **Claude Code**, **Antigravity**, **Gemini CLI**, and **Codex CLI** supported as first-class native targets.
 
 <p align="center">
   <img src="assets/architecture-flow.svg" width="100%" alt="efficient-ai Architecture and 4-Layer Token & Cost Pipeline" />
@@ -69,74 +69,82 @@ Using [`tokscope`](tools/tokscope/) across **315 real Claude Code transcripts (6
 
 ---
 
-## 1-Command Install (Plugin, Extension, or Skills)
+## 10-Second Setup (Native Plugins + Unified `eai` Binary)
 
-`efficient-ai` ships as a native plugin/extension and skill pack (**118 idle tokens/turn total** across all 3 skills) plus a zero-dependency unified CLI (`scripts/eai.py`) that automatically accelerates with compiled Rust binaries when available.
+`efficient-ai` ships as a **single zero-dependency Rust binary (`eai`)** plus native plugins/extensions across all major AI coding agents (**122 idle tokens/turn** across all 3 skills):
 
-### Option A: Claude Code Plugin (Skills +Slash Commands + `PreToolUse` Hooks)
-Inside Claude Code, run:
+### 1. Install the Unified `eai` Binary (macOS, Linux, Windows)
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.sh | sh
+
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.ps1 | iex
+
+# Or build directly from source (single Cargo workspace)
+cargo install --path tools/eai
+```
+
+Then run **one command** to inspect your current spend or auto-configure every installed agent:
+```bash
+eai analyze                # Auto-discovers Claude Code, Antigravity, Gemini CLI & Codex transcripts + Est. USD
+eai init                   # Auto-detects agents, merges hooks safely, installs lean AGENTS.md & baseline snapshot
+eai doctor                 # Verifies hooks, <10ms engine latency, shims, & static-prefix health
+eai stats                  # Tracks local tokens saved, recovery rate, & stuck loops prevented
+eai uninstall              # Cleanly removes efficient-ai hooks & managed blocks without touching your rules
+```
+
+### 2. Native Plugin Marketplaces
+
+#### Claude Code Plugin (Skills + `/prefix-audit` + Sub-10ms `PreToolUse` Hook)
 ```text
 /plugin marketplace add hatimmakki/efficient-ai
 /plugin install efficient-ai@efficient-ai
 ```
-This installs:
-- **Skills:** `efficient-coding`, `outline`, `tokscope`
-- **Slash commands:** `/tokscope`, `/prefix-audit`, `/outline`
-- **`PreToolUse` Hook:** Automatically rewrites verbose CLI calls (`git status` → `git status -sb`, `pytest` → `pytest -q --tb=short`, `cargo test` → `cargo test -q`) and nudges on whole-file reads $>350$ lines.
 
-### Option B: Universal Agent Skills (`Claude Code`, `Codex CLI`, `Gemini CLI`, `Cursor`)
+#### Antigravity Native Plugin (`.antigravity-plugin` + Root `hooks.json` + `rules/AGENTS.md` + Skills)
 ```bash
-npx skills add hatimmakki/efficient-ai
+agy plugin install https://github.com/hatimmakki/efficient-ai
 ```
+Supports camelCase `PreToolUse` `overwrite` on `run_command`, recovery tracking on `read_file`, and full `transcript.jsonl` profiling in `eai analyze`.
 
-### Option C: Gemini CLI Extension
+#### Gemini CLI Extension (`gemini-extension.json` + `BeforeTool` & `AfterTool` Hooks)
 ```bash
 gemini extensions install https://github.com/hatimmakki/efficient-ai
 ```
 
-### Option D: Zero-Dependency Unified CLI (`scripts/eai.py`)
-No virtualenv, `pip`, or Rust build required—works out of the box with standard Python 3.10+:
+#### Codex CLI Plugin & Marketplace (`.codex-plugin` + `.agents/plugins/marketplace.json` + PATH Shims)
 ```bash
-git clone https://github.com/hatimmakki/efficient-ai.git
-cd efficient-ai
+codex plugin marketplace add https://github.com/hatimmakki/efficient-ai.git
+eai init --agents codex    # Installs executable .eai/shims for pytest, cargo, npm, pnpm, yarn, go
+```
 
-python scripts/eai.py analyze                  # Profile your ~/.claude/projects sessions
-python scripts/eai.py audit . --include-user   # Audit AGENTS.md, CLAUDE.md, skills, & MCP schemas
-python scripts/eai.py outline path/to/file.py  # Structure-aware symbol outline [Lstart-Lend]
-python scripts/eai.py setup --project /my/repo # Copy lean AGENTS.md (227 tok) + CLAUDE.md shim
+#### Universal Agent Skills (`Claude Code`, `Antigravity`, `Codex CLI`, `Gemini CLI`, `Cursor`)
+```bash
+npx skills add hatimmakki/efficient-ai
 ```
 
 ---
 
-## Native Rust Acceleration (Optional)
+## Core CLI Commands (`eai`)
 
-For sub-millisecond AST/symbol outlines and stream compression, build the zero-dependency Rust binaries (`scripts/eai.py` will automatically detect and use them):
-
-### 1. `outline` — Structure-Aware File Reader & Enclosing-Symbol Search (Rust)
+All tools are built into the single `eai` binary (standalone `outline`, `squeeze`, and `scripts/eai.py` remain available for backwards compatibility):
 
 ```bash
-cargo build --release --manifest-path tools/outline/Cargo.toml
+# 1. Structure-aware file outlines & targeted symbol reads (−89.7% explore / −72.7% symbol read)
+eai outline tools/tokscope/tokscope/parsers.py
+eai outline tools/tokscope/tokscope/parsers.py --symbol parse_claude_jsonl
+eai outline search "cache_write" tools/
 
-# Inspect all symbols & [Lstart-Lend] spans (−89.7% tokens vs whole-file Read)
-./tools/outline/target/release/outline tools/tokscope/tokscope/parsers.py
+# 2. Lossless command compression, concurrency-safe .eai/logs/<id>.log spill & H7 loop detection
+eai squeeze -- pytest -v
+eai squeeze -- cargo test
 
-# Read only a specific function or method (−72.7% tokens)
-./tools/outline/target/release/outline tools/tokscope/tokscope/parsers.py --symbol parse_claude_jsonl
-
-# Search across files and resolve matches to their enclosing symbol
-./tools/outline/target/release/outline search "cache_write" tools/
-```
-
-### 2. `squeeze` — Lossless Retrievable Command Wrapper & Loop Detector (Rust)
-
-```bash
-cargo build --release --manifest-path tools/squeeze/Cargo.toml
-
-# Wrap test/build commands (strips passing noise, keeps 100% of errors, spills raw log to .eai/logs/last.log)
-./tools/squeeze/target/release/squeeze -- pytest -v
-
-# Install portable PATH shims for Claude Code, Codex CLI, and Gemini CLI
-./tools/squeeze/target/release/squeeze --install-shims .eai/shims
+# 3. Multi-agent session token, cache hit, & USD cost profiler + static-prefix audit
+eai analyze                        # Auto-discovers Claude, Antigravity, Gemini CLI & Codex
+eai audit . --include-user         # Audits AGENTS.md, CLAUDE.md, GEMINI.md, skills & MCP configs
+eai stats                          # Shows local savings, squeeze recovery rate & Pre-EAI baseline
 ```
 
 ---

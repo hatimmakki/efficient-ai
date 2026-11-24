@@ -39,6 +39,7 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         out["total_cost_weighted"] = round(summary.total_cost_weighted, 1)
         out["cache_hit_rate"] = round(summary.cache_hit_rate, 4)
         out["amplification_factor"] = round(summary.amplification_factor, 2)
+        out["agents_seen"] = sorted(summary.agents_seen)
         del out["read_sizes"]  # keep JSON summary compact
         print(json.dumps(out, indent=2))
     else:
@@ -111,7 +112,15 @@ def cmd_selftest(_args: argparse.Namespace) -> int:
     assert g_sess.output == 350 and g_sess.reasoning == 100
     assert len(g_sess.observations) == 2
 
-    print("tokscope selftest: ALL 3 AGENT FIXTURES PASSED (Claude Code, Codex CLI, Gemini CLI)")
+    # 4. Verify Antigravity disjoint input_tokens + cache_read_tokens + GENERIC tool outputs
+    agy_f = fixtures_dir / "antigravity_transcript.jsonl"
+    a_sess = detect_and_parse(agy_f, agent="auto")
+    assert a_sess is not None and a_sess.agent == "antigravity", "Failed to detect Antigravity fixture"
+    assert a_sess.turn_count == 2
+    assert a_sess.uncached_input == 16000 and a_sess.cache_read == 14000 and a_sess.output == 600
+    assert len(a_sess.observations) == 2 and a_sess.observations[1].is_ranged_read is True
+
+    print("tokscope selftest: ALL 4 AGENT FIXTURES PASSED (Claude Code, Antigravity, Codex CLI, Gemini CLI)")
     return 0
 
 
@@ -124,7 +133,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_an = sub.add_parser("analyze", help="Analyze session transcripts and attribute tokens/cost")
     p_an.add_argument("path", nargs="?", default=None, help="Transcript file or directory (default: ~/.claude/projects)")
-    p_an.add_argument("--agent", choices=["auto", "claude", "codex", "gemini"], default="auto")
+    p_an.add_argument("--agent", choices=["auto", "claude", "antigravity", "codex", "gemini"], default="auto")
     p_an.add_argument("--json", action="store_true", help="Output JSON summary instead of Markdown")
     p_an.set_defaults(func=cmd_analyze)
 
@@ -136,7 +145,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_sa = sub.add_parser("sanitize", help="Export privacy-safe per-session aggregate metrics")
     p_sa.add_argument("path", nargs="?", default=None, help="Transcript file or directory (default: ~/.claude/projects)")
-    p_sa.add_argument("--agent", choices=["auto", "claude", "codex", "gemini"], default="auto")
+    p_sa.add_argument("--agent", choices=["auto", "claude", "antigravity", "codex", "gemini"], default="auto")
     p_sa.add_argument("--out", required=True, help="Output JSON file path (e.g. data/public/sessions.json)")
     p_sa.set_defaults(func=cmd_sanitize)
 
