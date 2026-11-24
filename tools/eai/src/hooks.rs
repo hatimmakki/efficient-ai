@@ -5,7 +5,9 @@
 //!   eai hook antigravity
 //!   eai hook gemini
 
-use crate::telemetry::{record_hook_rewrite, record_recovery, record_squeeze};
+use crate::telemetry::{
+    read_events, record_hook_rewrite, record_recovery, record_squeeze, summarize_events,
+};
 use serde_json::{json, Value};
 use std::env;
 use std::fs;
@@ -287,10 +289,73 @@ pub fn handle_antigravity_payload(payload: &Value, eai_exe: &Path) -> Value {
             json!({"decision": "allow"})
         }
         "PostToolUse" => json!({}),
-        "PreInvocation" | "PostInvocation" => json!({"injectSteps": []}),
+        "PreInvocation" => json!({"injectSteps": []}),
+        "PostInvocation" => build_antigravity_receipt(&cwd),
         "Stop" => json!({"decision": "allow"}),
         _ => json!({}),
     }
+}
+
+/// Emit a zero-LLM-token inline savings card (`systemMessage: ""` + `metadata.user_markdown`)
+/// whenever new `outline` or `squeeze` savings were recorded since the previous invocation.
+fn build_antigravity_receipt(cwd: &Path) -> Value {
+    let metrics_file = cwd.join(".eai").join("metrics.jsonl");
+    let events = read_events(&metrics_file);
+    if events.is_empty() {
+        return json!({"injectSteps": []});
+    }
+
+    let cursor_file = cwd.join(".eai").join(".last_receipt_idx");
+    let last_idx: usize = fs::read_to_string(&cursor_file)
+        .ok()
+        .and_then(|s| s.trim().parse().ok())
+        .unwrap_or(0)
+        .min(events.len());
+
+    if last_idx >= events.len() {
+        return json!({"injectSteps": []});
+    }
+
+    let new_slice = &events[last_idx..];
+    let turn_summary = summarize_events("turn", new_slice);
+    let _ = fs::write(&cursor_file, format!("{}\n", events.len()));
+
+    if turn_summary.total_tokens_saved == 0 && turn_summary.loops_intercepted == 0 {
+        return json!({"injectSteps": []});
+    }
+
+    let total_summary = summarize_events("project", &events);
+    let mut parts = Vec::new();
+    if turn_summary.outline_calls > 0 {
+        parts.push(format!("{} outline", turn_summary.outline_calls));
+    }
+    if turn_summary.squeeze_calls > 0 {
+        parts.push(format!("{} squeeze", turn_summary.squeeze_calls));
+    }
+    let breakdown = if parts.is_empty() {
+        "hooks".to_string()
+    } else {
+        parts.join(" + ")
+    };
+
+    let md = format!(
+        "`[eai]` Saved **~{} tok** this turn ({}) · Project total: **{} tok** · Recovery rate: **{:.1}%**",
+        turn_summary.total_tokens_saved,
+        breakdown,
+        total_summary.total_tokens_saved,
+        total_summary.recovery_rate_pct
+    );
+
+    json!({
+        "injectSteps": [{
+            "systemMessage": {
+                "systemMessage": "",
+                "metadata": {
+                    "user_markdown": md
+                }
+            }
+        }]
+    })
 }
 
 /// Handle Gemini CLI `BeforeTool` and `AfterTool` hook payloads.
@@ -499,5 +564,32 @@ mod tests {
     fn test_split_shell_tokens_with_spaces() {
         let t = split_shell_tokens("cat \"my folder/big file.py\"");
         assert_eq!(t, vec!["cat", "my folder/big file.py"]);
+    }
+
+    #[test]
+    fn test_antigravity_zero_token_receipt_deduped() {
+        let tmp = env::temp_dir().join(format!("eai_agy_receipt_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&tmp);
+        fs::create_dir_all(tmp.join(".eai")).unwrap();
+        crate::telemetry::record_outline(&tmp, "outline", 4000, 400);
+
+        let exe = Path::new("/usr/local/bin/eai");
+        let payload = json!({
+            "hookEventName": "PostInvocation",
+            "cwd": tmp.display().to_string()
+        });
+        let r1 = handle_antigravity_payload(&payload, exe);
+        let step = &r1["injectSteps"][0]["systemMessage"];
+        assert_eq!(step["systemMessage"], "");
+        assert!(step["metadata"]["user_markdown"]
+            .as_str()
+            .unwrap()
+            .contains("Saved"));
+
+        // Calling again with no new savings returns empty injectSteps
+        let r2 = handle_antigravity_payload(&payload, exe);
+        assert_eq!(r2["injectSteps"].as_array().unwrap().len(), 0);
+
+        let _ = fs::remove_dir_all(&tmp);
     }
 }

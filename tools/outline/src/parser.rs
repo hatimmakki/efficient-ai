@@ -20,6 +20,10 @@ pub enum Lang {
     Go,
     CStyle,
     Markdown,
+    Json,
+    Yaml,
+    Toml,
+    Sql,
     Unknown,
 }
 
@@ -39,9 +43,27 @@ impl Lang {
             "c" | "cc" | "cpp" | "cxx" | "h" | "hpp" | "java" | "cs" | "swift" | "kt" | "kts"
             | "dart" => Lang::CStyle,
             "md" | "markdown" => Lang::Markdown,
+            "json" => Lang::Json,
+            "yml" | "yaml" => Lang::Yaml,
+            "toml" => Lang::Toml,
+            "sql" => Lang::Sql,
             _ => Lang::Unknown,
         }
     }
+}
+
+/// Extract symbols for a path: prefers true tree-sitter AST when enabled and supported,
+/// falling back seamlessly to structured parsers for Markdown/JSON/YAML/TOML/SQL/C-style.
+pub fn extract_symbols_for_path(source: &str, path: &Path) -> Vec<SymbolSpan> {
+    #[cfg(feature = "treesitter")]
+    {
+        if let Some(syms) = crate::ts_parser::extract_with_treesitter(source, path) {
+            if !syms.is_empty() {
+                return syms;
+            }
+        }
+    }
+    extract_symbols(source, Lang::from_path(path))
 }
 
 pub fn extract_symbols(source: &str, lang: Lang) -> Vec<SymbolSpan> {
@@ -49,9 +71,143 @@ pub fn extract_symbols(source: &str, lang: Lang) -> Vec<SymbolSpan> {
     match lang {
         Lang::Python => extract_python(&lines),
         Lang::Markdown => extract_markdown(&lines),
+        Lang::Json => extract_json_keys(&lines),
+        Lang::Yaml => extract_yaml_keys(&lines),
+        Lang::Toml => extract_toml_sections(&lines),
+        Lang::Sql => extract_sql_decls(&lines),
         Lang::Rust | Lang::TsJs | Lang::Go | Lang::CStyle => extract_brace_lang(&lines, lang),
         Lang::Unknown => Vec::new(),
     }
+}
+
+fn extract_json_keys(lines: &[&str]) -> Vec<SymbolSpan> {
+    let mut syms: Vec<SymbolSpan> = Vec::new();
+    for (i, line) in lines.iter().enumerate() {
+        let ind = leading_spaces(line);
+        let t = line.trim();
+        // Top-level object properties (indent 2 or 4)
+        if ind <= 4 && t.starts_with('"') {
+            if let Some(end_q) = t[1..].find('"') {
+                let key = &t[1..1 + end_q];
+                let rest = t[2 + end_q..].trim_start();
+                if rest.starts_with(':') {
+                    let sig = if t.len() > 80 {
+                        format!("{}...", &t[..77])
+                    } else {
+                        t.trim_end_matches(',').to_string()
+                    };
+                    syms.push(SymbolSpan {
+                        kind: "key",
+                        name: key.to_string(),
+                        signature: sig,
+                        indent: ind,
+                        start_line: i + 1,
+                        end_line: lines.len(),
+                    });
+                }
+            }
+        }
+    }
+    for idx in 0..syms.len() {
+        if idx + 1 < syms.len() {
+            syms[idx].end_line = syms[idx + 1].start_line.saturating_sub(1).max(syms[idx].start_line);
+        }
+    }
+    syms
+}
+
+fn extract_yaml_keys(lines: &[&str]) -> Vec<SymbolSpan> {
+    let mut syms: Vec<SymbolSpan> = Vec::new();
+    for (i, line) in lines.iter().enumerate() {
+        if leading_spaces(line) == 0 {
+            let t = line.trim();
+            if !t.is_empty() && !t.starts_with('#') && !t.starts_with('-') {
+                if let Some((key, _)) = t.split_once(':') {
+                    let k = key.trim();
+                    if !k.is_empty() {
+                        syms.push(SymbolSpan {
+                            kind: "key",
+                            name: k.to_string(),
+                            signature: t.to_string(),
+                            indent: 0,
+                            start_line: i + 1,
+                            end_line: lines.len(),
+                        });
+                    }
+                }
+            }
+        }
+    }
+    for idx in 0..syms.len() {
+        if idx + 1 < syms.len() {
+            syms[idx].end_line = syms[idx + 1].start_line.saturating_sub(1).max(syms[idx].start_line);
+        }
+    }
+    syms
+}
+
+fn extract_toml_sections(lines: &[&str]) -> Vec<SymbolSpan> {
+    let mut syms: Vec<SymbolSpan> = Vec::new();
+    for (i, line) in lines.iter().enumerate() {
+        let t = line.trim();
+        if t.starts_with('[') && t.ends_with(']') {
+            let name = t.trim_matches(|c| c == '[' || c == ']').trim().to_string();
+            if !name.is_empty() {
+                syms.push(SymbolSpan {
+                    kind: "section",
+                    name,
+                    signature: t.to_string(),
+                    indent: 0,
+                    start_line: i + 1,
+                    end_line: lines.len(),
+                });
+            }
+        }
+    }
+    for idx in 0..syms.len() {
+        if idx + 1 < syms.len() {
+            syms[idx].end_line = syms[idx + 1].start_line.saturating_sub(1).max(syms[idx].start_line);
+        }
+    }
+    syms
+}
+
+fn extract_sql_decls(lines: &[&str]) -> Vec<SymbolSpan> {
+    let mut syms: Vec<SymbolSpan> = Vec::new();
+    for (i, line) in lines.iter().enumerate() {
+        let t = line.trim();
+        let up = t.to_ascii_uppercase();
+        if up.starts_with("CREATE ") || up.starts_with("ALTER ") {
+            let toks: Vec<&str> = t.split_whitespace().collect();
+            let name = toks
+                .iter()
+                .rev()
+                .find(|w| {
+                    let wu = w.to_ascii_uppercase();
+                    !matches!(
+                        wu.as_str(),
+                        "AS" | "BEGIN" | "IF" | "NOT" | "EXISTS" | "(" | "{"
+                    )
+                })
+                .map(|w| w.trim_matches(|c| c == '(' || c == ';' || c == '"' || c == '`'))
+                .unwrap_or("stmt")
+                .to_string();
+            syms.push(SymbolSpan {
+                kind: "sql",
+                name,
+                signature: t.to_string(),
+                indent: 0,
+                start_line: i + 1,
+                end_line: lines.len(),
+            });
+        }
+    }
+    for idx in 0..syms.len() {
+        if idx + 1 < syms.len() {
+            syms[idx].end_line = syms[idx + 1].start_line.saturating_sub(1).max(syms[idx].start_line);
+        }
+    }
+    syms
 }
 
 fn leading_spaces(line: &str) -> usize {

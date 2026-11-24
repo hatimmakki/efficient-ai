@@ -1,8 +1,8 @@
 [package]
 name = "outline"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
-description = "Structure-aware code outlines, targeted symbol reads, and enclosing-symbol search for AI coding agents."
+description = "Structure-aware code outlines (tree-sitter + .gitignore + token budget), targeted symbol reads, and enclosing-symbol search for AI coding agents."
 license = "Apache-2.0"
 
 [lib]
@@ -12,3 +12,25 @@ path = "src/lib.rs"
 [[bin]]
 name = "outline"
 path = "src/main.rs"
+
+[features]
+default = ["treesitter"]
+treesitter = [
+    "dep:tree-sitter",
+    "dep:tree-sitter-python",
+    "dep:tree-sitter-rust",
+    "dep:tree-sitter-typescript",
+    "dep:tree-sitter-javascript",
+    "dep:tree-sitter-go",
+    "dep:tree-sitter-java",
+]
+
+[dependencies]
+ignore = "0.4"
+tree-sitter = { version = "0.25", optional = true }
+tree-sitter-python = { version = "0.25", optional = true }
+tree-sitter-rust = { version = "0.24", optional = true }
+tree-sitter-typescript = { version = "0.23", optional = true }
+tree-sitter-javascript = { version = "0.25", optional = true }
+tree-sitter-go = { version = "0.25", optional = true }
+tree-sitter-java = { version = "0.23", optional = true }

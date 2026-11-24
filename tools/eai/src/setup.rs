@@ -35,6 +35,7 @@ pub struct DetectedAgents {
     pub antigravity: bool,
     pub gemini: bool,
     pub codex: bool,
+    pub cursor: bool,
 }
 
 pub fn detect_installed_agents(home: Option<&Path>) -> DetectedAgents {
@@ -49,7 +50,42 @@ pub fn detect_installed_agents(home: Option<&Path>) -> DetectedAgents {
             || h.join(".gemini").join("config").is_dir(),
         gemini: h.join(".gemini").is_dir(),
         codex: h.join(".codex").is_dir(),
+        cursor: h.join(".cursor").is_dir(),
     }
+}
+
+const CURSOR_RULE_MDC: &str = r#"---
+description: Cut agent session tokens using outline reads, squeeze compression, and concise prose
+alwaysApply: true
+---
+
+# Efficient Coding Workflow (`efficient-ai`)
+
+- Batch independent tool calls in a single turn.
+- For files >200 lines, call `outline_file` (or `eai outline <path>`) to inspect `[Lstart-Lend]` spans before whole-file reads, then fetch only the needed symbol or range.
+- Use `outline_search` to find code and resolve enclosing symbols in one step.
+- Run noisy test/build commands via `squeeze_run` (or `eai squeeze -- <cmd>`) so passing noise is elided while full logs spill to `.eai/logs/`.
+- Keep prose brief: skip preambles and post-edit recaps; cite `path:line` instead of echoing unchanged code.
+"#;
+
+/// Wire an ultra-lean `efficient-ai` stdio MCP server entry into `.mcp.json`, `.cursor/mcp.json`, or `mcp_config.json`.
+pub fn merge_mcp_config(mcp_path: &Path, eai_exe: &Path) -> std::io::Result<bool> {
+    let mut root = read_json_or_empty(mcp_path);
+    let obj = root.as_object_mut().unwrap();
+    let servers = obj
+        .entry("mcpServers")
+        .or_insert_with(|| Value::Object(Map::new()))
+        .as_object_mut()
+        .unwrap();
+    servers.insert(
+        "efficient-ai".to_string(),
+        json!({
+            "command": eai_exe.display().to_string(),
+            "args": ["mcp"]
+        }),
+    );
+    write_json_with_backup(mcp_path, &root)?;
+    Ok(true)
 }
 
 fn quote_exe(p: &Path) -> String {
@@ -150,6 +186,11 @@ pub fn merge_antigravity_hooks(hooks_path: &Path, eai_exe: &Path) -> std::io::Re
                     "command": cmd,
                     "timeout": 5
                 }]
+            }],
+            "PostInvocation": [{
+                "type": "command",
+                "command": cmd,
+                "timeout": 5
             }]
         }),
     );
@@ -328,6 +369,7 @@ fn remove_eai_from_json_hooks(path: &Path, agent: &str) -> std::io::Result<bool>
 pub fn cmd_init(args: &[String]) -> i32 {
     let mut project = PathBuf::from(".");
     let mut global = false;
+    let mut enable_mcp = false;
     let mut agents_arg = "auto".to_string();
     let mut capture_baseline = true;
 
@@ -339,6 +381,7 @@ pub fn cmd_init(args: &[String]) -> i32 {
                 i += 1;
             }
             "--global" | "-g" => global = true,
+            "--mcp" => enable_mcp = true,
             "--agents" if i + 1 < args.len() => {
                 agents_arg = args[i + 1].clone();
                 i += 1;
@@ -346,8 +389,8 @@ pub fn cmd_init(args: &[String]) -> i32 {
             "--no-baseline" => capture_baseline = false,
             "-h" | "--help" => {
                 println!(
-                    "Usage: eai init [--project <dir>] [--global] [--agents auto|claude,antigravity,gemini,codex] [--no-baseline]\n\
-                     Auto-detects installed AI coding agents, wires native hooks & PATH shims safely, installs lean AGENTS.md, and snapshots a Pre-EAI baseline."
+                    "Usage: eai init [--project <dir>] [--global] [--mcp] [--agents auto|claude,antigravity,gemini,codex,cursor] [--no-baseline]\n\
+                     Auto-detects installed AI coding agents, wires native hooks, optional ultra-lean MCP server (<280 tok), PATH shims, lean AGENTS.md, and snapshots a Pre-EAI baseline."
                 );
                 return 0;
             }
@@ -360,13 +403,22 @@ pub fn cmd_init(args: &[String]) -> i32 {
     let home = user_home();
     let detected = detect_installed_agents(home.as_deref());
 
-    let (want_claude, want_agy, want_gemini, want_codex) = if agents_arg == "auto" {
-        let any = detected.claude || detected.antigravity || detected.gemini || detected.codex;
+    let (want_claude, want_agy, want_gemini, want_codex, want_cursor) = if agents_arg == "auto" {
+        let any = detected.claude
+            || detected.antigravity
+            || detected.gemini
+            || detected.codex
+            || detected.cursor;
         if any {
-            (detected.claude, detected.antigravity, detected.gemini, detected.codex)
+            (
+                detected.claude,
+                detected.antigravity,
+                detected.gemini,
+                detected.codex,
+                detected.cursor,
+            )
         } else {
-            // Default to all 4 when running in a fresh/container environment
-            (true, true, true, true)
+            (true, true, true, true, false)
         }
     } else {
         let low = agents_arg.to_ascii_lowercase();
@@ -376,6 +428,7 @@ pub fn cmd_init(args: &[String]) -> i32 {
             all || low.contains("antigravity") || low.contains("agy"),
             all || low.contains("gemini"),
             all || low.contains("codex"),
+            all || low.contains("cursor"),
         )
     };
 
@@ -468,6 +521,24 @@ pub fn cmd_init(args: &[String]) -> i32 {
         let p = project.join(".gemini").join("settings.json");
         if merge_gemini_settings(&p, &eai_exe, true).is_ok() {
             println!("- [OK] Gemini CLI hook wired: `.gemini/settings.json`");
+        }
+    }
+    if want_cursor {
+        let rules_dir = project.join(".cursor").join("rules");
+        if fs::create_dir_all(&rules_dir).is_ok()
+            && fs::write(rules_dir.join("efficient-ai.mdc"), CURSOR_RULE_MDC).is_ok()
+        {
+            println!("- [OK] Cursor rule installed: `.cursor/rules/efficient-ai.mdc`");
+        }
+        let cursor_mcp = project.join(".cursor").join("mcp.json");
+        if merge_mcp_config(&cursor_mcp, &eai_exe).is_ok() {
+            println!("- [OK] Cursor ultra-lean MCP wired: `.cursor/mcp.json` (<280 idle tok)");
+        }
+    }
+    if enable_mcp {
+        let mcp_json = project.join(".mcp.json");
+        if merge_mcp_config(&mcp_json, &eai_exe).is_ok() {
+            println!("- [OK] Ultra-lean MCP server wired: `.mcp.json` (`eai mcp`, <280 idle tok)");
         }
     }
 
@@ -660,6 +731,22 @@ pub fn cmd_uninstall(args: &[String]) -> i32 {
     }
     if let Ok(true) = remove_managed_agents_block(&project) {
         println!("- Removed managed efficient-ai block from `AGENTS.md`");
+    }
+    let cursor_rule = project.join(".cursor").join("rules").join("efficient-ai.mdc");
+    if cursor_rule.is_file() && fs::remove_file(&cursor_rule).is_ok() {
+        println!("- Removed `.cursor/rules/efficient-ai.mdc`");
+    }
+    for mcp_file in [project.join(".mcp.json"), project.join(".cursor").join("mcp.json")] {
+        if mcp_file.is_file() {
+            let mut root = read_json_or_empty(&mcp_file);
+            if let Some(servers) = root.get_mut("mcpServers").and_then(|v| v.as_object_mut()) {
+                if servers.remove("efficient-ai").is_some()
+                    && write_json_with_backup(&mcp_file, &root).is_ok()
+                {
+                    println!("- Removed `efficient-ai` MCP server from `{}`", mcp_file.display());
+                }
+            }
+        }
     }
     let shims = project.join(".eai").join("shims");
     if shims.is_dir() && fs::remove_dir_all(&shims).is_ok() {

@@ -1,6 +1,7 @@
 //! `eai` — Unified zero-dependency CLI for efficient-ai.
 
 mod hooks;
+mod mcp;
 mod setup;
 mod telemetry;
 mod tokscope;
@@ -22,6 +23,7 @@ fn print_help() {
          \x20 eai outline <file|search> [...]                  Structure-aware outlines & symbol reads\n\
          \x20 eai squeeze [--max-lines N] -- <cmd> [args...]   Lossless compression, spill log & loop guard\n\
          \x20 eai hook <claude|antigravity|gemini>             Sub-10ms native agent hook router (stdin JSON)\n\
+         \x20 eai mcp                                          Ultra-lean stdio MCP server (<280 idle tokens)\n\
          \x20 eai sanitize [path] --out <file.json>            Export privacy-safe aggregate session JSON\n\
          \x20 eai selftest                                     Verify all 4 agent parsers on synthetic fixtures\n\
          \x20 eai uninstall [--project <dir>] [--global]       Cleanly remove efficient-ai hooks & shims",
@@ -68,6 +70,7 @@ fn main() -> ExitCode {
             code
         }
         "hook" => ExitCode::from(hooks::cmd_hook(rest) as u8),
+        "mcp" => ExitCode::from(mcp::cmd_mcp(rest) as u8),
         "analyze" => ExitCode::from(tokscope::cmd_analyze(rest) as u8),
         "audit" => ExitCode::from(tokscope::cmd_audit(rest) as u8),
         "sanitize" => ExitCode::from(tokscope::cmd_sanitize(rest) as u8),

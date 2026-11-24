@@ -20,23 +20,28 @@ pub fn should_wrap_command(cmd: &str) -> bool {
     }
 
     match parts[0] {
-        "pytest" | "vitest" | "jest" => true,
+        "pytest" | "vitest" | "jest" | "mocha" | "tsc" | "eslint" | "mypy" | "ruff" => true,
+        "npx" => matches!(parts.get(1).copied(), Some("vitest" | "jest" | "tsc" | "eslint")),
         "cargo" => matches!(parts.get(1).copied(), Some("test" | "build" | "check" | "clippy")),
         "npm" | "pnpm" | "yarn" | "bun" => {
             matches!(parts.get(1).copied(), Some("test"))
                 || (parts.get(1).copied() == Some("run")
                     && matches!(parts.get(2).copied(), Some("test" | "build" | "lint" | "typecheck")))
         }
-        "go" => matches!(parts.get(1).copied(), Some("test" | "build")),
+        "go" => matches!(parts.get(1).copied(), Some("test" | "build" | "vet")),
         "dotnet" => matches!(parts.get(1).copied(), Some("test" | "build")),
-        "flutter" => matches!(parts.get(1).copied(), Some("test")),
+        "flutter" => matches!(parts.get(1).copied(), Some("test" | "analyze")),
+        "mvn" | "gradle" | "./gradlew" | "gradlew" => {
+            matches!(parts.get(1).copied(), Some("test" | "build" | "check" | "verify"))
+        }
+        "docker" => matches!(parts.get(1).copied(), Some("build")),
         "python" | "python3" | "py" => {
             parts.get(1).copied() == Some("-m")
-                && matches!(parts.get(2).copied(), Some("pytest" | "unittest"))
+                && matches!(parts.get(2).copied(), Some("pytest" | "unittest" | "mypy"))
         }
         "uv" => {
             parts.get(1).copied() == Some("run")
-                && matches!(parts.get(2).copied(), Some("pytest"))
+                && matches!(parts.get(2).copied(), Some("pytest" | "mypy" | "ruff"))
         }
         _ => false,
     }

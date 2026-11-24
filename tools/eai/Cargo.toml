@@ -1,6 +1,6 @@
 [package]
 name = "eai"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Unified zero-dependency CLI for efficient-ai: structure-aware reading, lossless output compression, multi-agent hooks, session token profiling, and 1-command setup."
 license = "Apache-2.0"

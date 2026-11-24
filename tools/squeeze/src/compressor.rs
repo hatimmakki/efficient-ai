@@ -97,6 +97,19 @@ fn is_elidable_passing_or_progress(trimmed: &str) -> bool {
     if trimmed.starts_with("=== RUN") || trimmed.starts_with("--- PASS:") {
         return true;
     }
+    // Gradle / Maven / Flutter / Docker / Dotnet / Mocha / Vitest routine progress lines
+    if trimmed.starts_with("> Task ") && trimmed.ends_with("UP-TO-DATE") {
+        return true;
+    }
+    if trimmed.starts_with("[INFO] Downloading ") || trimmed.starts_with("[INFO] Downloaded ") {
+        return true;
+    }
+    if trimmed.starts_with('#') && (trimmed.ends_with(" CACHED") || trimmed.contains(" DONE ")) {
+        return true;
+    }
+    if trimmed.starts_with("Passed ") && trimmed.contains('[') && trimmed.ends_with(']') {
+        return true;
+    }
     // Cargo / npm / pip / pnpm / docker build download & compile progress
     for prefix in [
         "Downloading ",
@@ -110,11 +123,14 @@ fn is_elidable_passing_or_progress(trimmed: &str) -> bool {
         "Requirement already satisfied:",
         "Using cached ",
         "Collecting ",
+        "Resolving ",
+        "Resolved ",
         "PASS ",
         "✓ ",
         "√ ",
         "✔ ",
         "ok   ",
+        "ok\t",
     ] {
         if trimmed.starts_with(prefix) {
             return true;

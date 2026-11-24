@@ -93,16 +93,22 @@ pub fn run_cli(args: &[String]) -> (ExitCode, Option<SqueezeMetrics>) {
 }
 
 /// Spawn an external program reliably on both Unix and Windows (handling `.cmd`/`.bat` like `npm` and `pnpm`).
-fn spawn_command(prog: &str, rest: &[String]) -> io::Result<Output> {
+fn spawn_command_in(prog: &str, rest: &[String], cwd: Option<&Path>) -> io::Result<Output> {
     #[cfg(windows)]
     {
-        // Try direct spawn first for real `.exe` binaries
-        match Command::new(prog).args(rest).output() {
+        let mut c = Command::new(prog);
+        c.args(rest);
+        if let Some(d) = cwd {
+            c.current_dir(d);
+        }
+        match c.output() {
             Ok(out) => Ok(out),
             Err(e) if e.kind() == io::ErrorKind::NotFound => {
-                // Fallback via `cmd /C` so `.cmd` / `.bat` wrappers (`npm`, `pnpm`, `yarn`, `npx`) work seamlessly
                 let mut cmd = Command::new("cmd");
                 cmd.arg("/C").arg(prog).args(rest);
+                if let Some(d) = cwd {
+                    cmd.current_dir(d);
+                }
                 cmd.output()
             }
             Err(e) => Err(e),
@@ -110,8 +116,72 @@ fn spawn_command(prog: &str, rest: &[String]) -> io::Result<Output> {
     }
     #[cfg(not(windows))]
     {
-        Command::new(prog).args(rest).output()
+        let mut c = Command::new(prog);
+        c.args(rest);
+        if let Some(d) = cwd {
+            c.current_dir(d);
+        }
+        c.output()
     }
+}
+
+/// Run a shell command string (via `sh -c` on Unix or `cmd /C` on Windows), compress output
+/// losslessly, spill full log to `<cwd>/.eai/logs/`, and return `(exit_code, rendered_text, metrics)`
+/// without writing anything to stdout (safe for MCP stdio servers).
+pub fn run_shell_capture(
+    shell_cmd: &str,
+    cwd: &Path,
+    max_lines: usize,
+) -> (i32, String, SqueezeMetrics) {
+    let output = {
+        #[cfg(windows)]
+        {
+            Command::new("cmd")
+                .args(["/C", shell_cmd])
+                .current_dir(cwd)
+                .output()
+        }
+        #[cfg(not(windows))]
+        {
+            Command::new("sh")
+                .args(["-c", shell_cmd])
+                .current_dir(cwd)
+                .output()
+        }
+    };
+
+    let out = match output {
+        Ok(o) => o,
+        Err(e) => {
+            let msg = format!("squeeze: failed to execute '{}': {}", shell_cmd, e);
+            return (
+                127,
+                msg,
+                SqueezeMetrics {
+                    command: shell_cmd.to_string(),
+                    exit_code: 127,
+                    ..Default::default()
+                },
+            );
+        }
+    };
+
+    let stdout_s = String::from_utf8_lossy(&out.stdout);
+    let stderr_s = String::from_utf8_lossy(&out.stderr);
+    let combined = if stderr_s.is_empty() {
+        stdout_s.into_owned()
+    } else if stdout_s.is_empty() {
+        stderr_s.into_owned()
+    } else {
+        format!("{}\n{}", stdout_s.trim_end(), stderr_s)
+    };
+
+    let code = out.status.code().unwrap_or(1);
+    let state_dir = cwd.join(".eai");
+    let loop_nudge = record_and_check_loop_in(&state_dir, shell_cmd, code, &combined);
+    let (rendered, metrics) =
+        format_compressed_in(&state_dir.join("logs"), shell_cmd, &combined, max_lines, code, loop_nudge.as_deref());
+    (code, rendered, metrics)
 }
 
 pub fn run_wrapped_command(cmd_args: &[String], max_lines: usize) -> (ExitCode, Option<SqueezeMetrics>) {
@@ -123,7 +193,7 @@ pub fn run_wrapped_command(cmd_args: &[String], max_lines: usize) -> (ExitCode, 
     let prog = &cmd_args[0];
     let rest = &cmd_args[1..];
 
-    let output = match spawn_command(prog, rest) {
+    let output = match spawn_command_in(prog, rest, None) {
         Ok(out) => out,
         Err(e) => {
             eprintln!("squeeze: failed to execute '{}': {}", prog, e);
@@ -149,38 +219,42 @@ pub fn run_wrapped_command(cmd_args: &[String], max_lines: usize) -> (ExitCode, 
     (ExitCode::from(code as u8), Some(metrics))
 }
 
-fn emit_compressed(
+fn format_compressed_in(
+    log_dir: &Path,
     cmd_label: &str,
     raw: &str,
     max_lines: usize,
     exit_code: i32,
     loop_nudge: Option<&str>,
-) -> SqueezeMetrics {
+) -> (String, SqueezeMetrics) {
     let res = compress_stream(raw, max_lines);
+    let mut rendered = String::new();
     if !res.output.is_empty() {
-        println!("{}", res.output);
+        rendered.push_str(&res.output);
+        rendered.push('\n');
     }
     let mut spilled_path: Option<String> = None;
     if res.elided_lines > 0 {
-        if let Ok(log_path) = spill_to_log(raw) {
+        if let Ok(log_path) = spill_to_log_in(log_dir, raw) {
             let p_str = log_path.display().to_string();
-            println!(
-                "[{} passing/duplicate lines elided ({} -> {} lines); full log: {}]",
+            rendered.push_str(&format!(
+                "[{} passing/duplicate lines elided ({} -> {} lines); full log: {}]\n",
                 res.elided_lines, res.total_lines, res.kept_lines, p_str
-            );
+            ));
             spilled_path = Some(p_str);
         } else {
-            println!(
-                "[{} passing/duplicate lines elided ({} -> {} lines)]",
+            rendered.push_str(&format!(
+                "[{} passing/duplicate lines elided ({} -> {} lines)]\n",
                 res.elided_lines, res.total_lines, res.kept_lines
-            );
+            ));
         }
     }
     if let Some(nudge) = loop_nudge {
-        println!("{}", nudge);
+        rendered.push_str(nudge);
+        rendered.push('\n');
     }
 
-    SqueezeMetrics {
+    let metrics = SqueezeMetrics {
         command: cmd_label.to_string(),
         raw_chars: raw.len(),
         kept_chars: res.output.len(),
@@ -190,7 +264,27 @@ fn emit_compressed(
         exit_code,
         log_path: spilled_path,
         loop_detected: loop_nudge.is_some(),
-    }
+    };
+    (rendered, metrics)
+}
+
+fn emit_compressed(
+    cmd_label: &str,
+    raw: &str,
+    max_lines: usize,
+    exit_code: i32,
+    loop_nudge: Option<&str>,
+) -> SqueezeMetrics {
+    let (rendered, metrics) = format_compressed_in(
+        &PathBuf::from(".eai").join("logs"),
+        cmd_label,
+        raw,
+        max_lines,
+        exit_code,
+        loop_nudge,
+    );
+    print!("{}", rendered);
+    metrics
 }
 
 /// Write raw log to a concurrency-safe unique path `.eai/logs/<ms>-<pid>.log`, refresh `last.log`,

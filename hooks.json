@@ -23,6 +23,13 @@
           }
         ]
       }
+    ],
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "python ./hooks/eai_hook.py antigravity",
+        "timeout": 5
+      }
     ]
   }
 }
