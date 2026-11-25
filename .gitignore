@@ -58,6 +58,15 @@ experiments/**/runs/
 logs/
 *.log
 
+# ---------- Design working cache (keep PRODUCT.md, DESIGN.md, config/design/surfaces) ----------
+.impeccable/cache/
+.impeccable/mocks/
+.impeccable/questions/
+.impeccable/review/
+.impeccable/chrome-profile/
+.impeccable/brief-body.md
+.impeccable/config.local.json
+
 # ---------- Scratch ----------
 scratch/
 tmp/

@@ -1,0 +1,562 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-25T18:10:00Z",
+  "title": "Design System: efficient-ai",
+  "extensions": {
+    "colorMeta": {
+      "cobalt": {
+        "role": "primary",
+        "displayName": "Shinkansen Royal Cobalt",
+        "canonical": "#0B4EA2",
+        "tonalRamp": [
+          "oklch(18% 0.065 257.5)",
+          "oklch(28% 0.105 257.5)",
+          "oklch(38% 0.138 257.5)",
+          "oklch(44% 0.150 257.5)",
+          "oklch(56% 0.145 257.5)",
+          "oklch(70% 0.110 257.5)",
+          "oklch(84% 0.060 257.5)",
+          "oklch(95% 0.017 257.5)"
+        ]
+      },
+      "cobalt-dark": {
+        "role": "primary",
+        "displayName": "Deep Cobalt",
+        "canonical": "#083978",
+        "tonalRamp": [
+          "oklch(16% 0.055 257.5)",
+          "oklch(26% 0.092 257.5)",
+          "oklch(36% 0.119 257.5)",
+          "oklch(46% 0.132 257.5)",
+          "oklch(58% 0.125 257.5)",
+          "oklch(72% 0.095 257.5)",
+          "oklch(85% 0.052 257.5)",
+          "oklch(95% 0.015 257.5)"
+        ]
+      },
+      "cobalt-tint": {
+        "role": "primary",
+        "displayName": "Cobalt Wash",
+        "canonical": "#E7F0FA",
+        "tonalRamp": [
+          "oklch(18% 0.040 250.8)",
+          "oklch(28% 0.065 250.8)",
+          "oklch(40% 0.088 250.8)",
+          "oklch(52% 0.095 250.8)",
+          "oklch(66% 0.078 250.8)",
+          "oklch(78% 0.052 250.8)",
+          "oklch(88% 0.030 250.8)",
+          "oklch(95% 0.017 250.8)"
+        ]
+      },
+      "jade": {
+        "role": "secondary",
+        "displayName": "Express Jade",
+        "canonical": "#0F7B5F",
+        "tonalRamp": [
+          "oklch(18% 0.042 169.2)",
+          "oklch(28% 0.064 169.2)",
+          "oklch(40% 0.084 169.2)",
+          "oklch(52% 0.100 169.2)",
+          "oklch(64% 0.098 169.2)",
+          "oklch(76% 0.080 169.2)",
+          "oklch(87% 0.048 169.2)",
+          "oklch(96% 0.015 169.2)"
+        ]
+      },
+      "jade-hover": {
+        "role": "secondary",
+        "displayName": "Deep Express Jade Hover",
+        "canonical": "#0C654E",
+        "tonalRamp": [
+          "oklch(17% 0.038 169.5)",
+          "oklch(27% 0.058 169.5)",
+          "oklch(38% 0.076 169.5)",
+          "oklch(45% 0.086 169.5)",
+          "oklch(58% 0.092 169.5)",
+          "oklch(72% 0.075 169.5)",
+          "oklch(85% 0.045 169.5)",
+          "oklch(95% 0.014 169.5)"
+        ]
+      },
+      "jade-text": {
+        "role": "secondary",
+        "displayName": "Express Jade Ink",
+        "canonical": "#0A634C",
+        "tonalRamp": [
+          "oklch(17% 0.038 169.2)",
+          "oklch(27% 0.058 169.2)",
+          "oklch(37% 0.075 169.2)",
+          "oklch(45% 0.086 169.2)",
+          "oklch(58% 0.092 169.2)",
+          "oklch(72% 0.075 169.2)",
+          "oklch(85% 0.045 169.2)",
+          "oklch(95% 0.014 169.2)"
+        ]
+      },
+      "jade-soft": {
+        "role": "secondary",
+        "displayName": "Jade Wash",
+        "canonical": "#E8F5F0",
+        "tonalRamp": [
+          "oklch(18% 0.035 171.1)",
+          "oklch(29% 0.055 171.1)",
+          "oklch(42% 0.074 171.1)",
+          "oklch(54% 0.086 171.1)",
+          "oklch(66% 0.078 171.1)",
+          "oklch(78% 0.062 171.1)",
+          "oklch(88% 0.038 171.1)",
+          "oklch(96% 0.015 171.1)"
+        ]
+      },
+      "jade-border": {
+        "role": "secondary",
+        "displayName": "Jade Rule",
+        "canonical": "#A8DBC9",
+        "tonalRamp": [
+          "oklch(18% 0.036 171.2)",
+          "oklch(29% 0.056 171.2)",
+          "oklch(41% 0.076 171.2)",
+          "oklch(54% 0.088 171.2)",
+          "oklch(66% 0.080 171.2)",
+          "oklch(76% 0.068 171.2)",
+          "oklch(85% 0.058 171.2)",
+          "oklch(96% 0.016 171.2)"
+        ]
+      },
+      "mint-on-dark": {
+        "role": "secondary",
+        "displayName": "Mint on Dark",
+        "canonical": "#6EE7B7",
+        "tonalRamp": [
+          "oklch(18% 0.045 165.0)",
+          "oklch(30% 0.075 165.0)",
+          "oklch(44% 0.105 165.0)",
+          "oklch(58% 0.128 165.0)",
+          "oklch(70% 0.138 165.0)",
+          "oklch(80% 0.135 165.0)",
+          "oklch(85% 0.130 165.0)",
+          "oklch(95% 0.035 165.0)"
+        ]
+      },
+      "vermilion": {
+        "role": "tertiary",
+        "displayName": "Signal Vermilion",
+        "canonical": "#D9381E",
+        "tonalRamp": [
+          "oklch(18% 0.070 31.9)",
+          "oklch(29% 0.115 31.9)",
+          "oklch(41% 0.155 31.9)",
+          "oklch(51% 0.185 31.9)",
+          "oklch(59% 0.201 31.9)",
+          "oklch(72% 0.145 31.9)",
+          "oklch(84% 0.075 31.9)",
+          "oklch(96% 0.016 31.9)"
+        ]
+      },
+      "vermilion-text": {
+        "role": "tertiary",
+        "displayName": "Deep Signal Vermilion Ink",
+        "canonical": "#B4250F",
+        "tonalRamp": [
+          "oklch(18% 0.068 31.5)",
+          "oklch(29% 0.112 31.5)",
+          "oklch(40% 0.150 31.5)",
+          "oklch(50% 0.182 31.5)",
+          "oklch(60% 0.190 31.5)",
+          "oklch(72% 0.140 31.5)",
+          "oklch(84% 0.072 31.5)",
+          "oklch(96% 0.015 31.5)"
+        ]
+      },
+      "vermilion-soft": {
+        "role": "tertiary",
+        "displayName": "Vermilion Wash",
+        "canonical": "#FDF0ED",
+        "tonalRamp": [
+          "oklch(18% 0.055 33.1)",
+          "oklch(30% 0.095 33.1)",
+          "oklch(42% 0.130 33.1)",
+          "oklch(54% 0.155 33.1)",
+          "oklch(66% 0.135 33.1)",
+          "oklch(78% 0.088 33.1)",
+          "oklch(88% 0.045 33.1)",
+          "oklch(97% 0.015 33.1)"
+        ]
+      },
+      "vermilion-border": {
+        "role": "tertiary",
+        "displayName": "Vermilion Rule",
+        "canonical": "#F0B6AA",
+        "tonalRamp": [
+          "oklch(18% 0.058 31.9)",
+          "oklch(30% 0.098 31.9)",
+          "oklch(42% 0.135 31.9)",
+          "oklch(54% 0.160 31.9)",
+          "oklch(66% 0.138 31.9)",
+          "oklch(76% 0.098 31.9)",
+          "oklch(83% 0.070 31.9)",
+          "oklch(96% 0.016 31.9)"
+        ]
+      },
+      "stock": {
+        "role": "neutral",
+        "displayName": "Ceramic Coated Stock",
+        "canonical": "#F7F8FA",
+        "tonalRamp": [
+          "oklch(18% 0.014 256.0)",
+          "oklch(28% 0.020 256.0)",
+          "oklch(42% 0.024 256.0)",
+          "oklch(56% 0.022 256.0)",
+          "oklch(70% 0.018 256.0)",
+          "oklch(82% 0.014 256.0)",
+          "oklch(92% 0.008 256.0)",
+          "oklch(98% 0.003 264.5)"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Pure Chart Sheet",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "oklch(18% 0.000 0)",
+          "oklch(30% 0.000 0)",
+          "oklch(44% 0.000 0)",
+          "oklch(58% 0.000 0)",
+          "oklch(72% 0.000 0)",
+          "oklch(84% 0.000 0)",
+          "oklch(94% 0.000 0)",
+          "oklch(100% 0.000 0)"
+        ]
+      },
+      "tint": {
+        "role": "neutral",
+        "displayName": "Cool Rail Tint",
+        "canonical": "#EDF1F6",
+        "tonalRamp": [
+          "oklch(18% 0.015 253.9)",
+          "oklch(28% 0.022 253.9)",
+          "oklch(42% 0.026 253.9)",
+          "oklch(56% 0.024 253.9)",
+          "oklch(70% 0.020 253.9)",
+          "oklch(82% 0.016 253.9)",
+          "oklch(91% 0.012 253.9)",
+          "oklch(96% 0.008 253.9)"
+        ]
+      },
+      "obsidian": {
+        "role": "neutral",
+        "displayName": "Obsidian Command Track / Primary Ink",
+        "canonical": "#11161D",
+        "tonalRamp": [
+          "oklch(15% 0.014 256.8)",
+          "oklch(20% 0.016 256.8)",
+          "oklch(30% 0.024 256.8)",
+          "oklch(44% 0.028 256.8)",
+          "oklch(58% 0.024 256.8)",
+          "oklch(74% 0.018 256.8)",
+          "oklch(86% 0.014 256.8)",
+          "oklch(95% 0.008 256.8)"
+        ]
+      },
+      "obsidian-plate": {
+        "role": "neutral",
+        "displayName": "Obsidian Plate",
+        "canonical": "#1B232E",
+        "tonalRamp": [
+          "oklch(15% 0.016 256.4)",
+          "oklch(25% 0.024 256.4)",
+          "oklch(36% 0.028 256.4)",
+          "oklch(48% 0.028 256.4)",
+          "oklch(62% 0.024 256.4)",
+          "oklch(75% 0.019 256.4)",
+          "oklch(87% 0.014 256.4)",
+          "oklch(95% 0.008 256.4)"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Slate Muted Ink",
+        "canonical": "#4A5565",
+        "tonalRamp": [
+          "oklch(17% 0.016 257.7)",
+          "oklch(28% 0.024 257.7)",
+          "oklch(38% 0.028 257.7)",
+          "oklch(45% 0.030 257.7)",
+          "oklch(58% 0.026 257.7)",
+          "oklch(72% 0.020 257.7)",
+          "oklch(85% 0.015 257.7)",
+          "oklch(95% 0.008 257.7)"
+        ]
+      },
+      "ink-on-dark": {
+        "role": "neutral",
+        "displayName": "Light Ink on Dark",
+        "canonical": "#DCE5F0",
+        "tonalRamp": [
+          "oklch(17% 0.016 253.3)",
+          "oklch(28% 0.022 253.3)",
+          "oklch(42% 0.026 253.3)",
+          "oklch(56% 0.025 253.3)",
+          "oklch(70% 0.022 253.3)",
+          "oklch(82% 0.020 253.3)",
+          "oklch(92% 0.018 253.3)",
+          "oklch(97% 0.008 253.3)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Timetable Hairline",
+        "canonical": "#C6D0DC",
+        "tonalRamp": [
+          "oklch(17% 0.015 252.9)",
+          "oklch(28% 0.022 252.9)",
+          "oklch(42% 0.026 252.9)",
+          "oklch(56% 0.025 252.9)",
+          "oklch(70% 0.023 252.9)",
+          "oklch(85% 0.020 252.9)",
+          "oklch(92% 0.014 252.9)",
+          "oklch(97% 0.006 252.9)"
+        ]
+      },
+      "rule-soft": {
+        "role": "neutral",
+        "displayName": "Soft Cell Rule",
+        "canonical": "#DCE3EC",
+        "tonalRamp": [
+          "oklch(17% 0.014 254.6)",
+          "oklch(28% 0.020 254.6)",
+          "oklch(42% 0.024 254.6)",
+          "oklch(56% 0.022 254.6)",
+          "oklch(70% 0.020 254.6)",
+          "oklch(82% 0.018 254.6)",
+          "oklch(91% 0.014 254.6)",
+          "oklch(97% 0.006 254.6)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display (Archivo 900)",
+        "purpose": "Hero h1 thesis headline only; self-hosted variable Archivo (600–900)."
+      },
+      "headline": {
+        "displayName": "Headline (Archivo 900)",
+        "purpose": "Section h2 headings, KPI figures, law ledger numbers, and fareboard monthly totals."
+      },
+      "title": {
+        "displayName": "Title (Archivo 800–900)",
+        "purpose": "Station h3 headings, brand wordmark, panel titles, fare labels, and button/tab captions."
+      },
+      "body": {
+        "displayName": "Body (Public Sans 400–700)",
+        "purpose": "Civic explanatory prose, section intros (max-width 78ch), table cells, and select controls; self-hosted variable Public Sans."
+      },
+      "label": {
+        "displayName": "Label (JetBrains Mono 700)",
+        "purpose": "Tabular telemetry bars, section metadata, table headers, status badges, classification chips, and SVG axis ticks."
+      },
+      "code": {
+        "displayName": "Code (JetBrains Mono 500–700)",
+        "purpose": "Install rail command line, CLI ledger commands, route station commands, and inline code spans."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Primary exponential ease-out curve for CSS state transitions, mirrored by 1 - 2^(-10t) for 280ms Daiya SVG curve morphing."
+      },
+      {
+        "name": "duration-detent",
+        "value": "120ms",
+        "purpose": "Active tactile press detent (translateY(1px)) on the Express Jade copy-install latch."
+      },
+      {
+        "name": "duration-fast",
+        "value": "160ms",
+        "purpose": "Quiet color and underline feedback on inline proof links."
+      },
+      {
+        "name": "duration-standard",
+        "value": "180ms",
+        "purpose": "Crisp background, ink, and border state inversions across buttons, tabs, fascia nav links, and version plates."
+      },
+      {
+        "name": "duration-layer",
+        "value": "220ms",
+        "purpose": "Fill and ink transitions across the 4-column additive layer switch cells (200ms on inner ON/OFF state badges)."
+      },
+      {
+        "name": "duration-morph",
+        "value": "280ms",
+        "purpose": "Exponential ease-out SVG curve morph, fareboard bar width transitions, and active top-bar scaleX(0->1) sweep."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "Forced transition collapse under prefers-reduced-motion: reduce alongside scroll-behavior: auto and non-animated SVG redraws."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "tablet-wide",
+        "value": "1100px"
+      },
+      {
+        "name": "tablet",
+        "value": "860px"
+      },
+      {
+        "name": "mobile-table",
+        "value": "760px"
+      },
+      {
+        "name": "mobile",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Copy Install Latch",
+      "kind": "button",
+      "refersTo": "button-copy-latch",
+      "description": "Signature Express Jade 1-click install button anchored to the obsidian command track with press detent and white-inverted copied state.",
+      "html": "<div class=\"ds-latch-stage\"><button type=\"button\" class=\"ds-copy-latch\">COPY INSTALL</button><button type=\"button\" class=\"ds-copy-latch ds-copied\"><svg class=\"ds-ic\" viewBox=\"0 0 14 14\" aria-hidden=\"true\"><path d=\"M2 7.5L5.5 11L12 3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"/></svg><span>COPIED</span></button></div>",
+      "css": ".ds-latch-stage { background: var(--obsidian, #11161D); padding: 14px; display: flex; flex-wrap: wrap; gap: 12px; } .ds-copy-latch { appearance: none; background: var(--jade, #0F7B5F); color: var(--sheet, #FFFFFF); border: 2px solid var(--jade, #0F7B5F); border-radius: 0; padding: 15px 30px; font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 900; font-size: 17px; letter-spacing: 0.03em; cursor: pointer; min-width: 192px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)), color 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)), transform 120ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-copy-latch:hover { background: #0C654E; border-color: #0C654E; } .ds-copy-latch:active { transform: translateY(1px); } .ds-copy-latch:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; } .ds-copy-latch.ds-copied { background: var(--sheet, #FFFFFF); color: var(--jade-text, #0A634C); border-color: var(--sheet, #FFFFFF); } .ds-ic { width: 14px; height: 14px; display: inline-block; flex-shrink: 0; }"
+    },
+    {
+      "name": "Primary Solid Button",
+      "kind": "button",
+      "refersTo": "button-solid",
+      "description": "Machined Royal Cobalt CTA button with square-miter directional arrow used in the simulator summary bar.",
+      "html": "<a class=\"ds-btn-solid\" href=\"#install-track\">Install eai <svg class=\"ds-ic-sm\" viewBox=\"0 0 14 14\" aria-hidden=\"true\"><path d=\"M7 11V3M3 7L7 3L11 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"/></svg></a>",
+      "css": ".ds-btn-solid { display: inline-flex; align-items: center; gap: 7px; background: var(--cobalt, #0B4EA2); color: var(--sheet, #FFFFFF); border: 2px solid var(--cobalt, #0B4EA2); border-radius: 0; padding: 11px 18px; font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 800; font-size: 14px; letter-spacing: 0.01em; text-decoration: none; cursor: pointer; transition: background 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)), border-color 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-btn-solid:hover { background: var(--cobalt-dark, #083978); border-color: var(--cobalt-dark, #083978); } .ds-btn-solid:focus-visible { outline: 2px solid var(--cobalt, #0B4EA2); outline-offset: 2px; } .ds-ic-sm { width: 12px; height: 12px; display: inline-block; flex-shrink: 0; }"
+    },
+    {
+      "name": "Ruled Line Button",
+      "kind": "button",
+      "refersTo": "button-line",
+      "description": "Pure-sheet secondary CTA framed by a 2px obsidian rule that inverts solid obsidian on hover.",
+      "html": "<a class=\"ds-btn-line\" href=\"#docs\">Read Full Docs <svg class=\"ds-ic-sm\" viewBox=\"0 0 14 14\" aria-hidden=\"true\"><path d=\"M3 11L11 3M5 3H11V9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"/></svg></a>",
+      "css": ".ds-btn-line { display: inline-flex; align-items: center; gap: 7px; background: var(--sheet, #FFFFFF); color: var(--ink, #11161D); border: 2px solid var(--obsidian, #11161D); border-radius: 0; padding: 10px 16px; font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 800; font-size: 14px; text-decoration: none; cursor: pointer; transition: background 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)), color 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-btn-line:hover { background: var(--obsidian, #11161D); color: var(--sheet, #FFFFFF); } .ds-btn-line:focus-visible { outline: 2px solid var(--cobalt, #0B4EA2); outline-offset: 2px; } .ds-ic-sm { width: 12px; height: 12px; display: inline-block; flex-shrink: 0; }"
+    },
+    {
+      "name": "Station Fascia Header",
+      "kind": "nav",
+      "refersTo": "fascia-nav",
+      "description": "76px sticky royal-cobalt enamel header bar anchored by a 5px Express Jade stripe, inverted EAI brand plate, and tabular release badge.",
+      "html": "<header class=\"ds-fascia\"><div class=\"ds-fascia-inner\"><a class=\"ds-brand\" href=\"#top\"><span class=\"ds-brand-code\">EAI</span><span class=\"ds-brand-name\">efficient-ai</span></a><nav class=\"ds-fascia-nav\" aria-label=\"Primary\"><a href=\"#plumbing\">Cost Mechanics</a><a href=\"#calculator\">Cost Simulator</a><a href=\"#leaderboard\">Exp 001–008</a></nav><div class=\"ds-fascia-meta\"><span class=\"ds-corpus\">315 SESSIONS · 2.59B TOKENS</span><a class=\"ds-ver-plate\" href=\"#release\">v1.1.0</a></div></div></header>",
+      "css": ".ds-fascia { background: var(--cobalt, #0B4EA2); color: #FFFFFF; border-bottom: 5px solid var(--jade, #0F7B5F); } .ds-fascia-inner { min-height: 76px; padding: 0 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; } .ds-brand { display: inline-flex; align-items: center; gap: 12px; color: #FFFFFF; text-decoration: none; } .ds-brand-code { background: #FFFFFF; color: var(--cobalt, #0B4EA2); font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 900; font-size: 18px; letter-spacing: -0.02em; padding: 5px 10px; line-height: 1; } .ds-brand-name { font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 800; font-size: 22px; letter-spacing: -0.03em; } .ds-fascia-nav { display: flex; gap: 22px; } .ds-fascia-nav a { color: rgba(255,255,255,0.92); text-decoration: none; font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 700; font-size: 14.5px; padding: 6px 0; border-bottom: 2px solid transparent; transition: border-color 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)), color 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-fascia-nav a:hover { color: #FFFFFF; border-bottom-color: #FFFFFF; } .ds-fascia-nav a:focus-visible, .ds-ver-plate:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; } .ds-fascia-meta { display: flex; align-items: center; gap: 14px; font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; } .ds-corpus { color: rgba(255,255,255,0.88); } .ds-ver-plate { border: 1.5px solid rgba(255,255,255,0.68); padding: 5px 10px; color: #FFFFFF; text-decoration: none; transition: background 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)), color 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-ver-plate:hover { background: #FFFFFF; color: var(--cobalt, #0B4EA2); }"
+    },
+    {
+      "name": "Platform Switcher Tab Rail",
+      "kind": "nav",
+      "refersTo": "tab-platform",
+      "description": "Obsidian command-rail platform tabs switching between recessed dark plates and solid Royal Cobalt active selection.",
+      "html": "<div class=\"ds-ptab-rail\" role=\"tablist\" aria-label=\"Select platform\"><button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"ds-ptab ds-active\">macOS / Linux</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"ds-ptab\">Claude Code</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"ds-ptab\">Antigravity</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"ds-ptab\">Codex CLI</button></div>",
+      "css": ".ds-ptab-rail { background: var(--obsidian, #11161D); padding: 14px; display: flex; flex-wrap: wrap; gap: 6px; } .ds-ptab { appearance: none; background: var(--obsidian-2, #1B232E); color: #C4D0DF; border: 1px solid #354255; border-radius: 0; padding: 7px 13px; font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 700; font-size: 13px; cursor: pointer; transition: background 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)), color 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)), border-color 180ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-ptab:hover { color: #FFFFFF; border-color: #6B82A3; } .ds-ptab:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; } .ds-ptab.ds-active { background: var(--cobalt, #0B4EA2); color: #FFFFFF; border-color: var(--cobalt, #0B4EA2); }"
+    },
+    {
+      "name": "Rail Select & Range Controls",
+      "kind": "input",
+      "refersTo": "select-rail",
+      "description": "Machined 2px obsidian simulator select dropdown with geometric chevron and sharp rectangular cobalt-thumb range slider.",
+      "html": "<div class=\"ds-field-stack\"><label class=\"ds-field-label\"><span>Agent / Pricing Model</span></label><select class=\"ds-rail-select\" aria-label=\"Agent pricing model\"><option>Claude Code · Sonnet ($3/$15 · 0.10× read)</option><option>Antigravity / Gemini Pro ($1.25/$10)</option><option>Codex CLI · GPT-5 ($1.50/$10)</option></select><label class=\"ds-field-label\"><span>Turns per Session (T)</span><span class=\"ds-field-val\">40</span></label><input class=\"ds-rail-range\" type=\"range\" min=\"10\" max=\"100\" step=\"5\" value=\"40\" aria-label=\"Turns per session\" /></div>",
+      "css": ".ds-field-stack { background: var(--stock, #F7F8FA); padding: 18px; display: flex; flex-direction: column; gap: 10px; max-width: 420px; } .ds-field-label { display: flex; justify-content: space-between; font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 700; font-size: 13.5px; color: var(--ink, #11161D); } .ds-field-val { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-weight: 700; color: var(--cobalt, #0B4EA2); font-variant-numeric: tabular-nums; } .ds-rail-select { appearance: none; width: 100%; padding: 11px 36px 11px 12px; border: 2px solid var(--obsidian, #11161D); border-radius: 0; background-color: var(--sheet, #FFFFFF); background-image: linear-gradient(45deg, transparent 50%, #11161D 50%), linear-gradient(135deg, #11161D 50%, transparent 50%); background-position: calc(100% - 18px) 17px, calc(100% - 12px) 17px; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; color: var(--ink, #11161D); font-family: var(--font-body, 'Public Sans', system-ui, sans-serif); font-size: 14px; font-weight: 700; cursor: pointer; } .ds-rail-select:focus-visible, .ds-rail-range:focus-visible { outline: 2px solid var(--cobalt, #0B4EA2); outline-offset: 2px; } .ds-rail-range { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: var(--rule, #C6D0DC); border: 1px solid var(--obsidian, #11161D); cursor: pointer; } .ds-rail-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 22px; background: var(--cobalt, #0B4EA2); border: 2px solid var(--obsidian, #11161D); border-radius: 0; } .ds-rail-range:focus-visible::-webkit-slider-thumb { background: var(--jade, #0F7B5F); } .ds-rail-range::-moz-range-thumb { width: 18px; height: 22px; background: var(--cobalt, #0B4EA2); border: 2px solid var(--obsidian, #11161D); border-radius: 0; }"
+    },
+    {
+      "name": "Classification Chip & Empirical Badges",
+      "kind": "chip",
+      "refersTo": "chip-layer",
+      "description": "Sharp monospace leaderboard classification chips paired with Express Jade verified-savings and Signal Vermilion cache-bust impact badges.",
+      "html": "<div class=\"ds-chip-row\"><span class=\"ds-layer-chip\">All 4 Layers</span><span class=\"ds-impact-badge ds-good\">−27.1% Claude · −32.5% Gemini · −37.6% Codex USD</span><span class=\"ds-impact-badge ds-bad\">+9.2% to +111.8% HIGHER Claude API bill</span></div>",
+      "css": ".ds-chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; } .ds-layer-chip { display: inline-block; font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 0; background: var(--cobalt-tint, #E7F0FA); color: var(--cobalt-dark, #083978); border: 1px solid #B7CEE8; } .ds-impact-badge { display: inline-block; font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; padding: 6px 10px; line-height: 1.4; border-radius: 0; } .ds-impact-badge.ds-good { background: var(--jade-soft, #E8F5F0); color: var(--jade-text, #0A634C); border: 1px solid var(--jade-border, #A8DBC9); } .ds-impact-badge.ds-bad { background: var(--sheet, #FFFFFF); color: var(--vermilion-text, #B4250F); border: 1px solid var(--vermilion-border, #F0B6AA); }"
+    },
+    {
+      "name": "Additive Layer Registration Switch",
+      "kind": "custom",
+      "refersTo": "toggle-layer",
+      "description": "Signature 4-layer Daiya toggle rail with exponential 3px jade top registration sweep, ON/OFF mono pill, and tabular impact readout.",
+      "html": "<div class=\"ds-layer-rail\" role=\"group\" aria-label=\"Optimization layers\"><button type=\"button\" class=\"ds-layer-btn\" aria-pressed=\"true\"><span class=\"ds-layer-top\"><span>01 PREFIX</span><span class=\"ds-layer-state\">ON</span></span><span class=\"ds-layer-title\">Prefix Diet</span><span class=\"ds-layer-impact\">−67.9% idle S</span></button><button type=\"button\" class=\"ds-layer-btn\" aria-pressed=\"false\"><span class=\"ds-layer-top\"><span>04 HISTORY</span><span class=\"ds-layer-state\">OFF</span></span><span class=\"ds-layer-title\">Batch Mask K=12</span><span class=\"ds-layer-impact\">Cache-safe</span></button></div>",
+      "css": ".ds-layer-rail { display: grid; grid-template-columns: repeat(2, 1fr); border: 2px solid var(--obsidian, #11161D); max-width: 420px; } .ds-layer-btn { appearance: none; background: var(--sheet, #FFFFFF); color: var(--ink-muted, #4A5565); border: none; border-right: 1px solid var(--rule, #C6D0DC); border-radius: 0; padding: 11px; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 3px; position: relative; transition: background 220ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)), color 220ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-layer-btn:last-child { border-right: none; } .ds-layer-btn:hover { background: var(--cobalt-tint, #E7F0FA); color: var(--ink, #11161D); } .ds-layer-btn:focus-visible { outline: 2px solid var(--cobalt, #0B4EA2); outline-offset: -2px; } .ds-layer-btn::before { content: \"\"; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--jade, #0F7B5F); transform: scaleX(0); transform-origin: left center; transition: transform 280ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-layer-btn[aria-pressed=\"true\"] { background: var(--jade-soft, #E8F5F0); color: var(--ink, #11161D); } .ds-layer-btn[aria-pressed=\"true\"]::before { transform: scaleX(1); } .ds-layer-top { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11px; font-weight: 700; } .ds-layer-state { padding: 2px 6px; background: var(--rule-soft, #DCE3EC); color: var(--ink-muted, #4A5565); } .ds-layer-btn[aria-pressed=\"true\"] .ds-layer-state { background: var(--jade, #0F7B5F); color: #FFFFFF; } .ds-layer-title { font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 800; font-size: 13.5px; color: var(--ink, #11161D); } .ds-layer-impact { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11.5px; font-variant-numeric: tabular-nums; } .ds-layer-btn[aria-pressed=\"true\"] .ds-layer-impact { color: var(--jade-text, #0A634C); font-weight: 700; }"
+    },
+    {
+      "name": "Ruled Timetable Fareboard Compartment",
+      "kind": "card",
+      "refersTo": "compartment-sheet",
+      "description": "Flat 2px obsidian compartment with dark telemetry header and horizontal vermilion/jade fare bands (zero drop shadows, zero left side stripes).",
+      "html": "<div class=\"ds-fare-card\"><div class=\"ds-fare-head\"><span>SYNTHETIC MONTHLY PROJECTION</span><span>FIXED BOUNDARY K=12 · M=6</span></div><div class=\"ds-fare-row ds-bad\"><div><div class=\"ds-fare-title\"><span>2. Naive Per-Turn Pruning</span><span class=\"ds-fare-tag ds-tag-bad\">CACHE BUST</span></div><div class=\"ds-fare-meta\">Cache hit collapses to 47.7%</div></div><div class=\"ds-fare-amt\">$103/mo (+76%)</div><div class=\"ds-bar\"><div class=\"ds-fill\" style=\"width:100%\"></div></div></div><div class=\"ds-fare-row ds-good\"><div><div class=\"ds-fare-title\"><span>3. Full efficient-ai Stack</span><span class=\"ds-fare-tag ds-tag-good\">CACHE SAFE</span></div><div class=\"ds-fare-meta\">88.0% cache hit preserved</div></div><div class=\"ds-fare-amt\">$33/mo (−43%)</div><div class=\"ds-bar\"><div class=\"ds-fill\" style=\"width:31.7%\"></div></div></div></div>",
+      "css": ".ds-fare-card { border: 2px solid var(--obsidian, #11161D); background: var(--sheet, #FFFFFF); border-radius: 0; max-width: 560px; } .ds-fare-head { background: var(--obsidian, #11161D); color: #FFFFFF; padding: 11px 18px; display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; } .ds-fare-row { padding: 16px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 18px; align-items: center; } .ds-fare-row.ds-bad { background: var(--vermilion-soft, #FDF0ED); border-top: 2px solid var(--vermilion, #D9381E); border-bottom: 2px solid var(--vermilion, #D9381E); } .ds-fare-row.ds-good { background: var(--jade-soft, #E8F5F0); border-bottom: 2px solid var(--jade, #0F7B5F); } .ds-fare-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 800; font-size: 16px; color: var(--ink, #11161D); } .ds-fare-tag { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11px; font-weight: 700; padding: 2px 7px; color: #FFFFFF; } .ds-tag-bad { background: var(--vermilion, #D9381E); } .ds-tag-good { background: var(--jade, #0F7B5F); } .ds-fare-meta { margin-top: 4px; font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-fare-row.ds-bad .ds-fare-meta, .ds-fare-row.ds-bad .ds-fare-amt { color: var(--vermilion-text, #B4250F); } .ds-fare-row.ds-good .ds-fare-meta, .ds-fare-row.ds-good .ds-fare-amt { color: var(--jade-text, #0A634C); } .ds-fare-amt { font-family: var(--font-display, 'Archivo', system-ui, sans-serif); font-weight: 900; font-size: 24px; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-bar { grid-column: 1 / -1; height: 8px; background: rgba(17,22,29,0.1); } .ds-fill { height: 100%; transition: width 280ms var(--ease-expo, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-fare-row.ds-bad .ds-fill { background: var(--vermilion, #D9381E); } .ds-fare-row.ds-good .ds-fill { background: var(--jade, #0F7B5F); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Shinkansen Daiya Timetable",
+    "overview": "The `efficient-ai` visual system charts multi-turn AI coding agent token economics with the operational clarity of a Japanese Shinkansen train-graph (`daiya`) and station wayfinding fascia. Ceramic coated timetable stock (`#F7F8FA`) and pure chart sheets (`#FFFFFF`) carry dense, verifiable telemetry anchored by a royal-cobalt enamel header (`#0B4EA2`) and obsidian command tracks (`#11161D`). Every surface privileges falsifiable measurements, tabular alignment, and instant mechanical legibility over decorative staging.\n\nMaterial contrast comes from crisp ruled borders (`1px` to `6px`), alternating light paper grounds and high-contrast obsidian bands, and strict signal-color discipline: Express Jade (`#0F7B5F`) marks verified cost savings and cache-safe compaction stops, while Signal Vermilion (`#D9381E`) marks cache-busting spikes and busted myths. Motion behaves like an instrument needle rather than a showcase effect, snapping across exponential ease-out curves (`cubic-bezier(0.16, 1, 0.3, 1)`) and collapsing cleanly under reduced-motion preferences.\n\nThe system explicitly rejects category-default purple-glow SaaS heroes, dark neon terminal clichés, soft drop shadows, rounded floating cards, colored vertical left-border stripes, eyebrow kickers above headings, and decorative glyph icons.",
+    "keyCharacteristics": [
+      "Ceramic timetable stock (`#F7F8FA`) and pure chart sheets (`#FFFFFF`) framed by royal-cobalt enamel (`#0B4EA2`) and obsidian command tracks (`#11161D`)",
+      "Three self-hosted variable typography voices (`Archivo`, `Public Sans`, `JetBrains Mono`) with universal tabular numerals on live telemetry",
+      "Flat architectural depth using `1px–6px` structural rules and tonal paper stepping with zero `box-shadow` declarations",
+      "Machined `0px` corners across all compartments and controls, reserving `50%` circles exclusively for route-track station nodes and SVG graph markers",
+      "Strict signal-color semantics separating Express Jade verified savings from Signal Vermilion cache-bust spikes",
+      "Decisive exponential ease-out (`cubic-bezier(0.16, 1, 0.3, 1)`) transitions paired with square-miter inline SVG icons and full reduced-motion support"
+    ],
+    "rules": [
+      {
+        "name": "The Signal Semantics Rule",
+        "body": "Express Jade (`#0F7B5F` / `#0A634C`) is used solely for verified cost savings, cache-safe states, and the primary copy-install latch; Signal Vermilion (`#D9381E` / `#B4250F`) is used solely for cache-bust spikes and myth-busted warnings. Never use either signal for neutral decoration or generic UI chrome.",
+        "section": "colors"
+      },
+      {
+        "name": "The Contrast-Paired Text Rule",
+        "body": "Never set small text on light paper or tinted washes in raw `#0F7B5F` or `#D9381E`; always step to the darkened ink tokens (`#0A634C` and `#B4250F`) on light surfaces, and step positive code/link highlights up to `#6EE7B7` on `#11161D` obsidian tracks.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Telemetry Rule",
+        "body": "Every numeric figure, currency readout, percentage delta, turn index, and benchmark table cell must apply `font-variant-numeric: tabular-nums` so interactive calculator updates and chart hover sweeps stay horizontally locked.",
+        "section": "typography"
+      },
+      {
+        "name": "The Zero-Kicker Baseline Rule",
+        "body": "Section headers never place stacked uppercase eyebrow kickers above the heading. Supporting context sits inline on the right edge of the `h2` baseline above a `3px` obsidian rule.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ruled Compartment Grid Rule",
+        "body": "Related metrics, toggles, and command items live inside shared `2px` obsidian outer frames separated by `1px` internal `#C6D0DC` hairlines rather than floating as isolated cards with background gutters between them.",
+        "section": "layout"
+      },
+      {
+        "name": "The Zero-Shadow Architectural Rule",
+        "body": "Components remain flat at rest and on hover; never add drop shadows, ambient blurs, or glow halos. Communicate interactivity through crisp border weight, surface inversion, and horizontal registration tracks.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Horizontal Track Rule",
+        "body": "Use horizontal top or bottom borders and full-width tinted bands to signal hierarchy or state. Never attach vertical colored left-border accent stripes to cards, fare rows, callouts, or table rows.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do preserve the daylight ceramic stock (`#F7F8FA`) and pure chart sheet (`#FFFFFF`) hierarchy anchored by `#0B4EA2` royal cobalt and `#11161D` obsidian tracks.",
+      "Do self-host and preload the three variable font faces (`Archivo`, `Public Sans`, `JetBrains Mono`) and apply `font-variant-numeric: tabular-nums` to every metric, price, percentage, and table column.",
+      "Do enforce strict signal semantics: `#0F7B5F` / `#0A634C` exclusively for verified savings, cache-safe states, and the copy latch; `#D9381E` / `#B4250F` exclusively for cache-bust spikes and myth-busted warnings.",
+      "Do keep structural depth flat via `1px–6px` architectural borders, surface inversions, and horizontal border tracks.",
+      "Do use sharp `0px` corners on all containers, buttons, tabs, inputs, badges, and tables, reserving `50%` circles exclusively for route-track station nodes and SVG graph markers.",
+      "Do draw inline geometric SVGs (`stroke-linecap=\"square\"`, `stroke-linejoin=\"miter\"`) and honor `@media (prefers-reduced-motion: reduce)` across both CSS transitions and JavaScript animations.",
+      "Do collapse wide data tables into `data-label`-prefixed stacked timetable records below `760px` so mobile views have zero horizontal overflow."
+    ],
+    "donts": [
+      "Don't add `box-shadow`, ambient glow halos, glassmorphism, or dark neon terminal styling to any surface or control.",
+      "Don't place stacked uppercase eyebrow kickers above section headings or page titles.",
+      "Don't attach colored vertical left-border accent stripes to cards, fare rows, callouts, or table rows.",
+      "Don't round buttons, containers, badges, inputs, or cards into soft SaaS pills or rounded rectangles.",
+      "Don't use Unicode arrow/check glyphs or third-party icon fonts in place of crisp square-miter inline SVGs.",
+      "Don't set small light-surface copy directly in raw `#0F7B5F` or `#D9381E` when `#0A634C` and `#B4250F` ink tokens are required for accessible contrast.",
+      "Don't leave a trailing connecting rail segment extending past the terminal node (`04`) of a horizontal route track."
+    ]
+  }
+}

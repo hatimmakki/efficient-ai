@@ -3,327 +3,2274 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>efficient-ai — Same Quality, Fewer Tokens for AI Coding Agents</title>
-<meta name="description" content="Single zero-dependency Rust CLI (eai) cutting AI coding agent token & API cost by 27-38% with zero quality loss across Claude Code, Antigravity, Gemini CLI, Codex CLI, and Cursor." />
+<title>efficient-ai v1.1.0 — Same Quality, 27–38% Lower AI Agent API Bills</title>
+<meta name="description" content="Single zero-dependency Rust binary (eai) and native plugins for Claude Code, Antigravity, Gemini CLI, Codex CLI, and Cursor. Empirically cuts full-session billed API spend by 27.1%–37.6% while protecting prompt caches." />
+<link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin />
 <style>
-  :root {
-    --bg: #F6F7FB;
-    --card: #FFFFFF;
-    --ink: #151531;
-    --muted: #5E6478;
-    --border: #E4E7F2;
-    --accent: #5B54FA;
-    --accent-2: #8B5CF6;
-    --green: #10B981;
-    --green-soft: #ECFDF5;
-    --red: #F43F5E;
-    --red-soft: #FFF1F2;
+  @font-face {
+    font-family: 'Archivo';
+    src: url('fonts/archivo-latin.woff2') format('woff2');
+    font-weight: 600 900;
+    font-style: normal;
+    font-display: swap;
   }
-  * { box-sizing: border-box; }
+  @font-face {
+    font-family: 'Public Sans';
+    src: url('fonts/public-sans-latin.woff2') format('woff2');
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('fonts/jetbrains-mono-latin.woff2') format('woff2');
+    font-weight: 500 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --stock: #F7F8FA;
+    --sheet: #FFFFFF;
+    --tint: #EDF1F6;
+    --cobalt: #0B4EA2;
+    --cobalt-dark: #083978;
+    --cobalt-tint: #E7F0FA;
+    --obsidian: #11161D;
+    --obsidian-2: #1B232E;
+    --ink: #11161D;
+    --ink-muted: #4A5565;
+    --rule: #C6D0DC;
+    --rule-soft: #DCE3EC;
+    --jade: #0F7B5F;
+    --jade-text: #0A634C;
+    --jade-soft: #E8F5F0;
+    --jade-border: #A8DBC9;
+    --vermilion: #D9381E;
+    --vermilion-text: #B4250F;
+    --vermilion-soft: #FDF0ED;
+    --vermilion-border: #F0B6AA;
+    --font-display: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+    --font-body: 'Public Sans', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    --max-w: 1360px;
+    --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    background: var(--obsidian);
+    color: var(--ink);
+    scrollbar-color: var(--cobalt) var(--tint);
+    scrollbar-width: thin;
+  }
+
   body {
     margin: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: radial-gradient(circle at 50% 0%, rgba(98,93,245,0.16), transparent 46%), var(--bg);
+    background: var(--stock);
     color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: var(--cobalt);
+    color: #FFFFFF;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--cobalt);
+    outline-offset: 2px;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 8px;
+    background: var(--obsidian);
+    color: #FFFFFF;
+    padding: 10px 16px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    z-index: 1000;
+    text-decoration: none;
+  }
+  .skip-link:focus { left: 12px; }
+
+  .num { font-variant-numeric: tabular-nums; }
+
+  .ic {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: -2px;
+    flex-shrink: 0;
+  }
+  .ic-sm {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    vertical-align: -1.5px;
+    flex-shrink: 0;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--tint);
+    padding: 0 4px;
+    border: 1px solid var(--rule-soft);
+  }
+
+  /* ── TOP ENAMEL STATION FASCIA ── */
+  .fascia {
+    background: var(--cobalt);
+    color: #FFFFFF;
+    border-bottom: 5px solid var(--jade);
+    position: sticky;
+    top: 0;
+    z-index: 60;
+  }
+  .fascia-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 32px;
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #FFFFFF;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .brand-code {
+    background: #FFFFFF;
+    color: var(--cobalt);
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    padding: 5px 10px;
+    line-height: 1;
+  }
+  .brand-name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.03em;
+  }
+  .fascia-nav {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+  }
+  .fascia-nav a {
+    color: rgba(255, 255, 255, 0.92);
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 14.5px;
+    padding: 6px 0;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: border-color 180ms var(--ease-expo), color 180ms var(--ease-expo);
+  }
+  .fascia-nav a:hover {
+    color: #FFFFFF;
+    border-bottom-color: #FFFFFF;
+  }
+  .fascia-nav a:focus-visible { outline-color: #FFFFFF; }
+  .fascia-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .corpus-readout {
+    color: rgba(255, 255, 255, 0.88);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .ver-plate {
+    border: 1.5px solid rgba(255, 255, 255, 0.68);
+    padding: 5px 10px;
+    color: #FFFFFF;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: background 180ms var(--ease-expo), color 180ms var(--ease-expo);
+  }
+  .ver-plate:hover {
+    background: #FFFFFF;
+    color: var(--cobalt);
+  }
+  .ver-plate:focus-visible { outline-color: #FFFFFF; }
+
+  /* ── FIRST VIEWPORT: DAIYA STAGE + OBSIDIAN INSTALL RAIL ── */
+  .hero-band {
+    background: var(--stock);
+    border-bottom: 2px solid var(--obsidian);
+  }
+  .hero-stage {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 32px 32px 26px;
+    display: grid;
+    grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+    gap: 34px;
+    align-items: stretch;
+  }
+  .thesis-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(40px, 4.3vw, 56px);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    color: var(--ink);
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--cobalt);
+  }
+  .thesis-copy {
+    margin: 16px 0 0;
+    font-size: 16.5px;
+    line-height: 1.54;
+    color: var(--ink-muted);
+  }
+  .thesis-copy strong { color: var(--ink); }
+
+  .thesis-source {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--cobalt);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--cobalt);
+    padding-bottom: 2px;
+    transition: color 160ms var(--ease-expo), border-color 160ms var(--ease-expo);
+  }
+  .thesis-source:hover { color: var(--obsidian); border-bottom-color: var(--obsidian); }
+
+  .btn-solid {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--cobalt);
+    color: #FFFFFF;
+    border: 2px solid var(--cobalt);
+    padding: 11px 18px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 180ms var(--ease-expo), border-color 180ms var(--ease-expo);
+  }
+  .btn-solid:hover { background: var(--cobalt-dark); border-color: var(--cobalt-dark); }
+  .btn-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--sheet);
+    color: var(--ink);
+    border: 2px solid var(--obsidian);
+    padding: 10px 16px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 180ms var(--ease-expo), color 180ms var(--ease-expo);
+  }
+  .btn-line:hover { background: var(--obsidian); color: #FFFFFF; }
+
+  .hero-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 3px solid var(--obsidian);
+    padding-top: 16px;
+    gap: 14px;
+  }
+  .kpi-num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(25px, 2.3vw, 32px);
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+  }
+  .kpi-num.jade { color: var(--jade-text); }
+  .kpi-num.red { color: var(--vermilion-text); }
+  .kpi-desc {
+    margin-top: 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.34;
+    color: var(--ink-muted);
+  }
+
+  /* ── LIVE DAIYA GRAPH PANEL ── */
+  .daiya-frame {
+    background: var(--sheet);
+    border: 2px solid var(--obsidian);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .daiya-bar {
+    background: var(--obsidian);
+    color: #FFFFFF;
+    padding: 11px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 18px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .daiya-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 11.5px;
+  }
+  .lg-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #DCE5F0;
+  }
+  .lg-line { width: 16px; height: 3px; display: inline-block; }
+  .lg-line.dash {
+    height: 0;
+    border-top: 3px dashed #94A3B8;
+  }
+
+  .daiya-canvas-wrap {
+    position: relative;
+    padding: 10px 14px 4px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .daiya-svg {
+    width: 100%;
+    height: 300px;
+    display: block;
+    cursor: crosshair;
+    touch-action: pan-y;
+  }
+  .daiya-inspector {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 18px;
+    padding: 9px 16px;
+    background: var(--tint);
+    border-top: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .insp-turn { color: var(--cobalt); }
+  .insp-vals { display: flex; flex-wrap: wrap; gap: 14px; }
+  .insp-bad { color: var(--vermilion-text); }
+  .insp-good { color: var(--jade-text); }
+
+  /* Additive 4-layer registration toggle rail */
+  .layer-switches {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 2px solid var(--obsidian);
+  }
+  .layer-btn {
+    appearance: none;
+    background: var(--sheet);
+    color: var(--ink-muted);
+    border: none;
+    border-right: 1px solid var(--rule);
+    padding: 11px 11px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    position: relative;
+    transition: background 220ms var(--ease-expo), color 220ms var(--ease-expo);
+  }
+  .layer-btn:last-child { border-right: none; }
+  .layer-btn:hover { background: var(--cobalt-tint); color: var(--ink); }
+  .layer-btn::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    background: var(--jade);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 280ms var(--ease-expo);
+  }
+  .layer-btn[aria-pressed="true"] {
+    background: var(--jade-soft);
+    color: var(--ink);
+  }
+  .layer-btn[aria-pressed="true"]::before {
+    transform: scaleX(1);
+  }
+  .layer-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .layer-state {
+    padding: 2px 6px;
+    font-size: 11px;
+    background: var(--rule-soft);
+    color: var(--ink-muted);
+    transition: background 200ms var(--ease-expo), color 200ms var(--ease-expo);
+  }
+  .layer-btn[aria-pressed="true"] .layer-state {
+    background: var(--jade);
+    color: #FFFFFF;
+  }
+  .layer-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 13.5px;
+    color: var(--ink);
+  }
+  .layer-impact {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-muted);
+  }
+  .layer-btn[aria-pressed="true"] .layer-impact { color: var(--jade-text); font-weight: 700; }
+
+  /* ── OBSIDIAN 1-CLICK INSTALL RAIL ── */
+  .install-band {
+    background: var(--obsidian);
+    color: #FFFFFF;
+    border-bottom: 5px solid var(--cobalt);
+  }
+  .install-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 18px 32px 22px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px 24px;
+    align-items: end;
+  }
+  .install-inner > div {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .platform-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .ptab {
+    appearance: none;
+    background: var(--obsidian-2);
+    color: #C4D0DF;
+    border: 1px solid #354255;
+    padding: 7px 13px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 180ms var(--ease-expo), color 180ms var(--ease-expo), border-color 180ms var(--ease-expo);
+  }
+  .ptab:hover { color: #FFFFFF; border-color: #6B82A3; }
+  .ptab:focus-visible { outline-color: #FFFFFF; }
+  .ptab.active {
+    background: var(--cobalt);
+    color: #FFFFFF;
+    border-color: var(--cobalt);
+  }
+  .cmd-line {
+    background: #0A0E14;
+    border: 1px solid #2E3A4B;
+    padding: 13px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .cmd-prompt {
+    color: #4AD1A3;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 14.5px;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .cmd-line code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: #F4F7FB;
+    font-family: var(--font-mono);
+    font-size: 14.5px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .copy-latch {
+    appearance: none;
+    background: var(--jade);
+    color: #FFFFFF;
+    border: 2px solid var(--jade);
+    padding: 15px 30px;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 17px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: 192px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 180ms var(--ease-expo), color 180ms var(--ease-expo), transform 120ms var(--ease-expo);
+  }
+  .copy-latch:hover { background: #0C654E; border-color: #0C654E; }
+  .copy-latch:active { transform: translateY(1px); }
+  .copy-latch:focus-visible { outline-color: #FFFFFF; }
+  .copy-latch.copied {
+    background: #FFFFFF;
+    color: var(--jade-text);
+    border-color: #FFFFFF;
+  }
+
+  /* ── SHARED SECTION STRUCTURE (NO EYEBROWS, NO NON-SEQUENTIAL NUMBERS) ── */
+  .section-wrap {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 60px 32px;
+  }
+  .section-band {
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-band.alt {
+    background: var(--sheet);
+  }
+  .sec-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px 24px;
+    border-bottom: 3px solid var(--obsidian);
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  .sec-head h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(25px, 2.5vw, 34px);
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+  .sec-meta {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-muted);
+  }
+  .sec-intro {
+    margin: 0 0 26px;
+    max-width: 78ch;
+    font-size: 16px;
+    color: var(--ink-muted);
+  }
+
+  /* ── HIDDEN COST PLUMBING ── */
+  .plumbing-bar-block {
+    background: var(--sheet);
+    border: 2px solid var(--obsidian);
+    padding: 20px 22px;
+    margin-bottom: 24px;
+  }
+  .plumbing-bar-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .plumbing-bar-top h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 18px;
+  }
+  .meter-track {
+    display: flex;
+    gap: 2px;
+    padding: 4px;
+    height: 48px;
+    border: 2px solid var(--obsidian);
+    overflow: hidden;
+    background: var(--sheet);
+  }
+  .seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: #FFFFFF;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 0 6px;
+  }
+  .seg-reads { width: 63.9%; background: var(--cobalt); }
+  .seg-search { width: 9.0%; background: #245B9E; }
+  .seg-mcp { width: 7.9%; background: #366891; }
+  .seg-streams { width: 6.8%; background: var(--vermilion); }
+  .seg-other { width: 12.4%; background: #4E5D6E; }
+  .meter-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin-top: 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .meter-legend strong { color: var(--ink); }
+  .ml-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 6px;
+    vertical-align: -1px;
+  }
+
+  .laws-ledger {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 2px solid var(--obsidian);
+    border-bottom: 2px solid var(--obsidian);
+    background: var(--sheet);
+  }
+  .law-cell {
+    padding: 20px 20px 22px;
+    border-right: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .law-cell:last-child { border-right: none; }
+  .law-fig {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--cobalt);
+  }
+  .law-fig.red { color: var(--vermilion-text); }
+  .law-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 16px;
+    line-height: 1.25;
+  }
+  .law-copy {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.48;
+    color: var(--ink-muted);
+  }
+
+  /* ── INTERACTIVE PROMPT-CACHE & COST SIMULATOR ── */
+  .sim-grid {
+    display: grid;
+    grid-template-columns: minmax(310px, 440px) minmax(0, 1fr);
+    border: 2px solid var(--obsidian);
+    background: var(--sheet);
+  }
+  .sim-controls {
+    padding: 24px 26px;
+    border-right: 2px solid var(--obsidian);
+    background: var(--stock);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 7px; }
+  .field-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13.5px;
+  }
+  .field-val {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--cobalt);
+  }
+  select.rail-select {
+    appearance: none;
+    width: 100%;
+    padding: 11px 36px 11px 12px;
+    border: 2px solid var(--obsidian);
+    background-color: var(--sheet);
+    background-image: linear-gradient(45deg, transparent 50%, var(--obsidian) 50%), linear-gradient(135deg, var(--obsidian) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 17px, calc(100% - 12px) 17px;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  input[type="range"].rail-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: var(--rule);
+    border: 1px solid var(--obsidian);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"].rail-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 22px;
+    background: var(--cobalt);
+    border: 2px solid var(--obsidian);
+    cursor: pointer;
+  }
+  input[type="range"].rail-range::-moz-range-thumb {
+    width: 18px;
+    height: 22px;
+    border-radius: 0;
+    background: var(--cobalt);
+    border: 2px solid var(--obsidian);
+    cursor: pointer;
+  }
+  input[type="range"].rail-range:focus-visible::-webkit-slider-thumb {
+    background: var(--jade);
+  }
+
+  .sim-sync-note {
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-muted);
     line-height: 1.5;
   }
-  .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
-  nav {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 0; border-bottom: 1px solid rgba(228,231,242,0.7);
+
+  /* Right fareboard (zero vertical side stripes; horizontal timetable bands + status code plates) */
+  .sim-fareboard {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
   }
-  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; text-decoration: none; color: var(--ink); }
-  .logo-bar { width: 9px; height: 28px; border-radius: 5px; background: linear-gradient(180deg,var(--accent),var(--accent-2)); }
-  .nav-links { display: flex; gap: 22px; align-items: center; font-size: 14px; font-weight: 600; }
-  .nav-links a { color: var(--muted); text-decoration: none; }
-  .nav-links a:hover { color: var(--accent); }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px;
-    font-size: 14px; font-weight: 700; text-decoration: none; border: 1px solid var(--border);
-    background: var(--card); color: var(--ink); cursor: pointer;
+  .fare-header {
+    background: var(--obsidian);
+    color: #FFFFFF;
+    padding: 12px 22px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
   }
-  .btn-primary { background: linear-gradient(90deg,var(--accent),var(--accent-2)); color: #fff; border: none; }
-  .hero { text-align: center; padding: 54px 0 36px; }
-  .badge {
-    display: inline-block; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 700;
-    background: #EEF0FF; color: var(--accent); margin-bottom: 16px;
+  .fare-rows {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
-  h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 900; letter-spacing: -0.03em; margin: 0 0 14px; line-height: 1.08; }
-  .hero p { max-width: 720px; margin: 0 auto 28px; font-size: 17px; color: var(--muted); }
-  .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 12px; }
-  .tab {
-    padding: 7px 13px; border-radius: 9px; border: 1px solid var(--border); background: var(--card);
-    font-size: 12.5px; font-weight: 700; color: var(--muted); cursor: pointer;
+  .fare-row {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 20px;
+    align-items: center;
   }
-  .tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .cmd-box {
-    max-width: 760px; margin: 0 auto 30px; background: #131326; color: #F8FAFC; border-radius: 14px;
-    padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px;
-    font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; text-align: left;
-    box-shadow: 0 12px 28px rgba(21,21,49,0.12);
+  .fare-row > div { min-width: 0; }
+  .fare-row.bad {
+    background: var(--vermilion-soft);
+    border-top: 2px solid var(--vermilion);
+    border-bottom: 2px solid var(--vermilion);
   }
-  .cmd-box code { overflow-x: auto; white-space: nowrap; }
-  .copy-btn {
-    background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.16);
-    padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+  .fare-row.good {
+    background: var(--jade-soft);
+    border-bottom: 2px solid var(--jade);
   }
-  .hero-img { width: 100%; border-radius: 20px; box-shadow: 0 18px 40px rgba(21,21,49,0.08); margin-bottom: 24px; }
-  section { padding: 36px 0; }
-  h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px; }
-  .sub { color: var(--muted); margin: 0 0 22px; font-size: 15px; }
-  .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 24px;
-    box-shadow: 0 8px 22px rgba(21,21,49,0.04);
+  .fare-title-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
   }
-  .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
-  .slider-row { margin-bottom: 16px; }
-  .slider-row label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
-  .slider-row input[type=range] { width: 100%; accent-color: var(--accent); }
-  select {
-    width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border);
-    font-size: 13.5px; font-weight: 600; background: #fff; color: var(--ink);
+  .fare-name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 16.5px;
   }
-  .result-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 13px 14px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border);
+  .fare-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    line-height: 1.2;
   }
-  .result-row.bad { background: var(--red-soft); border-color: #FECDD3; }
-  .result-row.good { background: var(--green-soft); border-color: #A7F3D0; }
-  .result-val { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 10px 8px; border-bottom: 1px solid var(--border); }
-  td { padding: 12px 8px; border-bottom: 1px solid #F1F3F9; }
-  .pill { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 700; }
-  .pill-good { background: var(--green-soft); color: var(--green); }
-  .pill-indigo { background: #EEF0FF; color: var(--accent); }
-  .pill-bad { background: var(--red-soft); color: var(--red); }
-  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-  footer { padding: 40px 0 56px; text-align: center; color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--border); margin-top: 40px; }
+  .fare-tag.bad { background: var(--vermilion); color: #FFFFFF; }
+  .fare-tag.good { background: var(--jade); color: #FFFFFF; }
+  .fare-meta {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+  .fare-row.bad .fare-meta { color: var(--vermilion-text); font-weight: 600; }
+  .fare-row.good .fare-meta { color: var(--jade-text); font-weight: 600; }
+  .fare-bar-wrap {
+    grid-column: 1 / -1;
+    height: 8px;
+    background: rgba(17, 22, 29, 0.1);
+  }
+  .fare-bar-fill {
+    height: 100%;
+    background: var(--obsidian);
+    transition: width 280ms var(--ease-expo);
+  }
+  .fare-row.bad .fare-bar-fill { background: var(--vermilion); }
+  .fare-row.good .fare-bar-fill { background: var(--jade); }
+  .fare-amount {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(22px, 2.2vw, 28px);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .fare-row.bad .fare-amount { color: var(--vermilion-text); }
+  .fare-row.good .fare-amount { color: var(--jade-text); }
+  .fare-summary {
+    margin-top: auto;
+    padding: 18px 24px;
+    background: var(--cobalt-tint);
+    border-top: 2px solid var(--cobalt);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px 20px;
+  }
+  .fare-headline {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--cobalt-dark);
+  }
+  .fare-sub {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 3px;
+  }
+
+  /* ── EMPIRICAL LEADERBOARD SCHEDULE ── */
+  .filter-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border: 2px solid var(--obsidian);
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 20px;
+    background: var(--sheet);
+  }
+  .ftab {
+    appearance: none;
+    background: transparent;
+    color: var(--ink);
+    border: none;
+    border-right: 1px solid var(--rule);
+    padding: 9px 16px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 180ms var(--ease-expo), color 180ms var(--ease-expo);
+  }
+  .ftab:last-child { border-right: none; }
+  .ftab:hover { background: var(--cobalt-tint); }
+  .ftab.active {
+    background: var(--obsidian);
+    color: #FFFFFF;
+  }
+
+  .schedule-wrap {
+    border: 2px solid var(--obsidian);
+    background: var(--sheet);
+    padding: 10px;
+  }
+  table.schedule {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  table.schedule thead th {
+    background: var(--obsidian);
+    color: #FFFFFF;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 13px 14px;
+  }
+  table.schedule tbody td {
+    padding: 14px 14px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  table.schedule tbody tr:last-child td { border-bottom: none; }
+  table.schedule tbody tr:hover { background: #F4F7FB; }
+  table.schedule tbody tr.myth-row { background: var(--vermilion-soft); }
+  table.schedule tbody tr.myth-row:hover { background: #FBE4DF; }
+
+  .tech-name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  .layer-chip {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    background: var(--cobalt-tint);
+    color: var(--cobalt-dark);
+    border: 1px solid #B7CEE8;
+    white-space: nowrap;
+  }
+  .impact-badge {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 10px;
+    line-height: 1.4;
+  }
+  .impact-badge.good {
+    background: var(--jade-soft);
+    color: var(--jade-text);
+    border: 1px solid var(--jade-border);
+  }
+  .impact-badge.bad {
+    background: #FFFFFF;
+    color: var(--vermilion-text);
+    border: 1px solid var(--vermilion-border);
+  }
+  .proof-link {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--cobalt);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .proof-link:hover { color: var(--obsidian); }
+
+  /* ── CONTINUOUS HORIZONTAL SHINKANSEN ROUTE TRACK (TERMINATES AT NODE 04) ── */
+  .route-rail-wrap {
+    margin-bottom: 36px;
+    padding-top: 4px;
+  }
+  .route-stations {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+  }
+  .station {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    padding-right: 22px;
+  }
+  .station:last-child { padding-right: 0; }
+  .station-node-row {
+    display: flex;
+    align-items: center;
+    height: 38px;
+    margin-right: -22px;
+  }
+  .station:last-child .station-node-row { margin-right: 0; }
+  .st-node {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--sheet);
+    border: 5px solid var(--cobalt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--obsidian);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .st-rail-seg {
+    flex: 1;
+    height: 6px;
+    background: var(--cobalt);
+  }
+  .station:nth-child(3) .st-rail-seg {
+    background: var(--jade);
+  }
+  .station:nth-child(4) .st-node {
+    border-color: var(--jade);
+    background: var(--jade);
+    color: #FFFFFF;
+  }
+  .station-body {
+    background: var(--stock);
+    border-top: 2px solid var(--obsidian);
+    padding: 16px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+  .station-head-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 10px;
+  }
+  .station h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 18.5px;
+    letter-spacing: -0.02em;
+  }
+  .st-share {
+    background: var(--jade-soft);
+    border: 1px solid var(--jade-border);
+    padding: 2px 7px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--jade-text);
+    white-space: nowrap;
+  }
+  .station p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+  .st-cmd {
+    margin-top: auto;
+    padding: 9px 10px;
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Everyday eai CLI command ledger */
+  .cli-ledger {
+    background: var(--obsidian);
+    color: #FFFFFF;
+    border: 2px solid var(--obsidian);
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+  .cli-side {
+    background: var(--cobalt);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .cli-side h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 22px;
+    line-height: 1.15;
+  }
+  .cli-side p {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.5;
+  }
+  .cli-rows {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 8px 0;
+  }
+  .cli-item {
+    padding: 14px 22px;
+    border-bottom: 1px solid #242E3D;
+    border-right: 1px solid #242E3D;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .cli-item:nth-child(2n) { border-right: none; }
+  .cli-item:nth-last-child(-n+2) { border-bottom: none; }
+  .cli-item code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: #6EE7B7;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+  .cli-item span {
+    font-size: 13px;
+    color: #C2CEDE;
+    line-height: 1.4;
+  }
+
+  /* ── ANCHORED STATION TERMINUS FOOTER ── */
+  .terminus {
+    background: var(--obsidian);
+    color: #DCE5F0;
+    border-top: 6px solid var(--cobalt);
+  }
+  .terminus-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 34px 32px 44px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .term-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 18px;
+    color: #FFFFFF;
+  }
+  .term-sub {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: #9FB0C4;
+  }
+  .term-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .term-links a {
+    color: #FFFFFF;
+    text-decoration: none;
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.35);
+    padding-bottom: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .term-links a:hover { border-bottom-color: #6EE7B7; color: #6EE7B7; }
+  .term-links a:focus-visible { outline-color: #FFFFFF; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .hero-stage { grid-template-columns: 1fr; padding: 24px 24px 22px; }
+    .laws-ledger { grid-template-columns: repeat(2, 1fr); }
+    .law-cell:nth-child(2n) { border-right: none; }
+    .law-cell:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
+    .route-stations { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .station { padding-right: 0; }
+    .station-node-row { margin-right: 0; }
+    .st-rail-seg { display: none; }
+    .cli-ledger { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 860px) {
+    .fascia-inner { padding: 10px 18px; min-height: 62px; flex-wrap: wrap; }
+    .corpus-readout { display: none; }
+    .fascia-nav {
+      gap: 18px;
+      order: 3;
+      width: 100%;
+      border-top: 1px solid rgba(255, 255, 255, 0.22);
+      padding-top: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sim-grid { grid-template-columns: 1fr; }
+    .sim-controls { border-right: none; border-bottom: 2px solid var(--obsidian); }
+    .install-inner { grid-template-columns: 1fr; padding: 16px 18px 20px; }
+    .copy-latch { width: 100%; }
+    .layer-switches { grid-template-columns: repeat(2, 1fr); }
+    .layer-btn:nth-child(2n) { border-right: none; }
+    .layer-btn:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
+  }
+
+  /* Stacked scannable mobile timetable records for Leaderboard (zero off-screen columns) */
+  @media (max-width: 760px) {
+    .schedule-wrap { padding: 0; border: none; background: transparent; }
+    table.schedule, table.schedule tbody, table.schedule tr, table.schedule td {
+      display: block;
+      width: 100%;
+    }
+    table.schedule thead { display: none; }
+    table.schedule tbody tr {
+      background: var(--sheet);
+      border: 2px solid var(--obsidian);
+      margin-bottom: 14px;
+      padding: 14px;
+    }
+    table.schedule tbody tr:last-child { margin-bottom: 0; }
+    table.schedule tbody tr.myth-row {
+      background: var(--vermilion-soft);
+      border-color: var(--vermilion);
+    }
+    table.schedule tbody td {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--rule-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    table.schedule tbody td:first-child { padding-top: 0; }
+    table.schedule tbody td:last-child { border-bottom: none; padding-bottom: 0; }
+    table.schedule tbody td::before {
+      content: attr(data-label);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+    table.schedule tbody td:first-child::before { display: none; }
+  }
+
+  @media (max-width: 600px) {
+    .hero-stage { padding: 20px 16px 18px; gap: 22px; }
+    .section-wrap { padding: 40px 16px; }
+    .hero-kpis { grid-template-columns: 1fr; gap: 12px; }
+    .laws-ledger { grid-template-columns: 1fr; }
+    .law-cell { border-right: none; border-bottom: 1px solid var(--rule); }
+    .law-cell:last-child { border-bottom: none; }
+    .route-stations { grid-template-columns: 1fr; gap: 16px; }
+    .cli-rows { grid-template-columns: 1fr; }
+    .cli-item { border-right: none; border-bottom: 1px solid #242E3D; }
+    .cli-item:last-child { border-bottom: none; }
+    .sim-controls { padding: 18px 16px; }
+    .fare-header { padding: 12px 16px; }
+    .fare-row { padding: 16px; grid-template-columns: 1fr; gap: 8px; }
+    .fare-amount { text-align: left; }
+    .fare-summary { padding: 16px; grid-template-columns: 1fr; }
+    .fare-summary .btn-solid { justify-content: center; }
+    .filter-rail { width: 100%; }
+    .ftab { flex: 1 1 auto; text-align: center; padding: 9px 10px; font-size: 12px; }
+    .terminus-inner { padding: 28px 16px 36px; }
+    .seg-search, .seg-mcp, .seg-streams, .seg-other { font-size: 0; }
+    .seg-reads { font-size: 11px; }
+    .daiya-canvas-wrap { padding: 8px 8px 4px; }
+    .daiya-svg { height: 224px; }
+    .daiya-inspector { padding: 8px 12px; font-size: 11px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; }
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <nav>
-    <a class="logo" href="#"><span class="logo-bar"></span> efficient-ai</a>
-    <div class="nav-links">
-      <a href="#calculator">Cost Calculator</a>
-      <a href="#leaderboard">Leaderboard</a>
-      <a href="#architecture">Architecture</a>
-      <a class="btn btn-primary" href="https://github.com/hatimmakki/efficient-ai">GitHub ★</a>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="fascia">
+  <div class="fascia-inner">
+    <a class="brand" href="#top" id="top">
+      <span class="brand-code">EAI</span>
+      <span class="brand-name">efficient-ai</span>
+    </a>
+    <nav class="fascia-nav" aria-label="Primary">
+      <a href="#plumbing">Cost Mechanics</a>
+      <a href="#calculator">Cost Simulator</a>
+      <a href="#leaderboard">Exp 001–008</a>
+      <a href="#pipeline">4-Layer Pipeline</a>
+      <a href="https://github.com/hatimmakki/efficient-ai">GitHub <svg class="ic-sm" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 11L11 3M5 3H11V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/></svg></a>
+    </nav>
+    <div class="fascia-meta">
+      <span class="corpus-readout num">315 SESSIONS · 2.59B TOKENS</span>
+      <a class="ver-plate" href="https://github.com/hatimmakki/efficient-ai/releases/tag/v1.1.0">v1.1.0 <svg class="ic-sm" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 11L11 3M5 3H11V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/></svg></a>
     </div>
-  </nav>
+  </div>
+</header>
 
-  <header class="hero">
-    <span class="badge">v1.0.0 · Verified on 2,824 Real Sessions (8.23B Tokens)</span>
-    <h1>Same quality, <span style="color:var(--accent)">30–40% fewer tokens.</span></h1>
-    <p>One zero-dependency Rust binary (<code>eai</code>) + native plugins for <strong>Claude Code</strong>, <strong>Antigravity</strong>, <strong>Gemini CLI</strong>, <strong>Codex CLI</strong>, and <strong>Cursor</strong>. Cuts real billed API cost with lossless recovery, tree-sitter outlines, and cache-safe batch masking.</p>
+<main id="main">
+  <!-- ── FIRST VIEWPORT: THESIS + LIVE DAIYA GRAPH ── -->
+  <section class="hero-band" aria-label="Overview and live session cost timetable">
+    <div class="hero-stage">
+      <div class="thesis-col">
+        <div>
+          <h1>Same quality.<br><em>27–38%</em> lower<br>API bills.</h1>
+          <p class="thesis-copy">One zero-dependency Rust binary (<code>eai</code>) and native plugins for <strong>Claude Code</strong>, <strong>Antigravity</strong>, <strong>Gemini CLI</strong>, <strong>Codex CLI</strong>, and <strong>Cursor</strong>. Cuts full-session spend across fixed <code>K=12</code> cache boundaries with lossless <code>.eai/logs/</code> recovery.</p>
+          <a class="thesis-source" href="https://github.com/hatimmakki/efficient-ai/blob/master/experiments/008-paired-e2e-benchmark/RESULTS.md">
+            Inspect 315-session Exp 008 proof
+            <svg class="ic-sm" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 11L11 3M5 3H11V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+          </a>
+        </div>
 
-    <div class="tabs" id="install-tabs">
-      <button class="tab active" data-cmd="curl -fsSL https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.sh | sh && eai init">macOS / Linux</button>
-      <button class="tab" data-cmd="irm https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.ps1 | iex; eai init">Windows PowerShell</button>
-      <button class="tab" data-cmd="/plugin marketplace add hatimmakki/efficient-ai && /plugin install efficient-ai@efficient-ai">Claude Code</button>
-      <button class="tab" data-cmd="agy plugin install https://github.com/hatimmakki/efficient-ai">Antigravity</button>
-      <button class="tab" data-cmd="gemini extensions install https://github.com/hatimmakki/efficient-ai">Gemini CLI</button>
-      <button class="tab" data-cmd="codex plugin marketplace add https://github.com/hatimmakki/efficient-ai.git && eai init --agents codex">Codex CLI</button>
-      <button class="tab" data-cmd="eai init --agents cursor">Cursor / MCP</button>
-    </div>
-    <div class="cmd-box">
-      <code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.sh | sh && eai init</code>
-      <button class="copy-btn" id="copy-btn">Copy</button>
-    </div>
-
-    <img class="hero-img" src="assets/hero-demo.svg" onerror="this.src='../assets/hero-demo.svg'" alt="efficient-ai 10-second setup and live impact proof" />
-  </header>
-
-  <section id="calculator">
-    <h2>Interactive Prompt-Cache &amp; Token Cost Calculator</h2>
-    <p class="sub">See why naive per-turn history pruning raises Claude bills by up to +111.8% — and how <code>efficient-ai</code> cuts your real monthly API spend while protecting prompt caches.</p>
-    <div class="card calc-grid">
-      <div>
-        <div class="slider-row">
-          <label><span>Agent / Pricing Model</span></label>
-          <select id="c-agent">
-            <option value="claude">Claude Code (Sonnet · $3/$15 · 0.1× cache read · 1.25× write)</option>
-            <option value="antigravity">Antigravity / Gemini Pro ($1.25/$10 · 0.25× cache read)</option>
-            <option value="codex">Codex CLI / GPT-5 ($1.50/$10 · 0.50× cache read)</option>
-          </select>
-        </div>
-        <div class="slider-row">
-          <label><span>Sessions per Month</span><span id="v-sess">60</span></label>
-          <input id="c-sess" type="range" min="10" max="300" step="10" value="60" />
-        </div>
-        <div class="slider-row">
-          <label><span>Turns per Session (T)</span><span id="v-turns">40</span></label>
-          <input id="c-turns" type="range" min="10" max="100" step="5" value="40" />
-        </div>
-        <div class="slider-row">
-          <label><span>Idle Static Prefix (AGENTS.md + Skills + MCP)</span><span id="v-pref">8,000 tok</span></label>
-          <input id="c-pref" type="range" min="500" max="25000" step="500" value="8000" />
-        </div>
-        <div class="slider-row">
-          <label><span>Avg Tool Observation / Turn</span><span id="v-obs">1,800 tok</span></label>
-          <input id="c-obs" type="range" min="400" max="5000" step="100" value="1800" />
+        <div class="hero-kpis">
+          <div>
+            <div class="kpi-num jade num">−37.6%</div>
+            <div class="kpi-desc">Codex USD · −32.5% Gemini · −27.1% Claude (Exp 008)</div>
+          </div>
+          <div>
+            <div class="kpi-num red num">+111.8%</div>
+            <div class="kpi-desc">Naive per-turn pruning cache-bust spike (Exp 007)</div>
+          </div>
+          <div>
+            <div class="kpi-num num">7.3 ms</div>
+            <div class="kpi-desc">Median Rust hook · 248 tok MCP idle</div>
+          </div>
         </div>
       </div>
 
-      <div>
-        <div class="result-row">
-          <div><strong>1. Vanilla Baseline</strong><div style="font-size:12px;color:var(--muted)" id="r-base-meta"></div></div>
-          <div class="result-val" id="r-base">$0/mo</div>
+      <div class="daiya-frame">
+        <div class="daiya-bar">
+          <span id="daiya-title" class="num">SYNTHETIC LCP MODEL · T=1 TO T=40 · CLAUDE SONNET</span>
+          <div class="daiya-legend">
+            <span class="lg-key"><i class="lg-line" style="background:#D9381E"></i>Naive Prune (M=6)</span>
+            <span class="lg-key"><i class="lg-line dash"></i>Vanilla Baseline</span>
+            <span class="lg-key"><i class="lg-line" style="background:#10B981"></i>eai Stack</span>
+          </div>
         </div>
-        <div class="result-row bad">
-          <div><strong>2. Naive Per-Turn Pruning (M=6)</strong><div style="font-size:12px;color:var(--red)" id="r-naive-meta"></div></div>
-          <div class="result-val" style="color:var(--red)" id="r-naive">$0/mo</div>
+
+        <div class="daiya-canvas-wrap">
+          <svg id="daiya-svg" class="daiya-svg" viewBox="0 0 820 300" role="img" aria-label="Interactive multi-turn API cost timetable comparing naive per-turn pruning, vanilla baseline, and efficient-ai across fixed cache compaction boundaries">
+            <g id="g-grid"></g>
+            <g id="g-ticks"></g>
+            <polygon id="area-save" fill="rgba(15,123,95,0.12)"></polygon>
+            <path id="path-naive" fill="none" stroke="#D9381E" stroke-width="3.4" stroke-linejoin="round"></path>
+            <path id="path-base" fill="none" stroke="#11161D" stroke-width="2.6" stroke-dasharray="7 4" stroke-linejoin="round"></path>
+            <path id="path-eai" fill="none" stroke="#0F7B5F" stroke-width="4.2" stroke-linejoin="round"></path>
+            <g id="g-stations"></g>
+            <g id="g-cursor"></g>
+            <g id="g-labels"></g>
+          </svg>
         </div>
-        <div class="result-row good">
-          <div><strong>3. Full efficient-ai Stack (outline + squeeze + proxy)</strong><div style="font-size:12px;color:#059669" id="r-eai-meta"></div></div>
-          <div class="result-val" style="color:var(--green)" id="r-eai">$0/mo</div>
+
+        <div class="daiya-inspector num" aria-live="polite">
+          <span class="insp-turn" id="insp-turn">TURN 40 / 40 · ILLUSTRATIVE LCP SIMULATION (HOVER TO INSPECT)</span>
+          <div class="insp-vals">
+            <span class="insp-bad" id="insp-naive">Naive: $1.71 (48% cache)</span>
+            <span id="insp-base">Vanilla: $0.97 (96% cache)</span>
+            <span class="insp-good" id="insp-eai">eai: $0.55 (88% cache)</span>
+          </div>
         </div>
-        <div style="margin-top:16px;padding:14px;border-radius:12px;background:#EEF0FF;font-size:13.5px;">
-          <strong style="color:var(--accent)" id="r-headline"></strong>
-          <div style="color:var(--muted);margin-top:4px;font-size:12.5px;">Model calibrated directly from Experiments 003–008 (exact LCP cache simulation).</div>
+
+        <div class="layer-switches" role="group" aria-label="Toggle efficient-ai optimization layers">
+          <button type="button" class="layer-btn" data-layer="prefix" aria-pressed="true">
+            <span class="layer-top"><span>01 PREFIX</span><span class="layer-state">ON</span></span>
+            <span class="layer-title">Prefix Diet</span>
+            <span class="layer-impact num">−67.9% idle S</span>
+          </button>
+          <button type="button" class="layer-btn" data-layer="outline" aria-pressed="true">
+            <span class="layer-top"><span>02 READS</span><span class="layer-state">ON</span></span>
+            <span class="layer-title">AST Outline</span>
+            <span class="layer-impact num">−47.2% reads</span>
+          </button>
+          <button type="button" class="layer-btn" data-layer="squeeze" aria-pressed="true">
+            <span class="layer-top"><span>03 STREAMS</span><span class="layer-state">ON</span></span>
+            <span class="layer-title">Lossless Squeeze</span>
+            <span class="layer-impact num">−92.6% logs</span>
+          </button>
+          <button type="button" class="layer-btn" data-layer="proxy" aria-pressed="true">
+            <span class="layer-top"><span>04 HISTORY</span><span class="layer-state">ON</span></span>
+            <span class="layer-title">Batch Mask K=12</span>
+            <span class="layer-impact num">Cache-safe</span>
+          </button>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="leaderboard">
-    <h2>Empirical Technique Leaderboard (Experiments 001–008)</h2>
-    <p class="sub">Every claim is reproducible from <code>experiments/</code> and verified on real multi-turn trajectories.</p>
-    <div class="filter-bar" id="lb-filters">
-      <button class="tab active" data-layer="all">All Layers</button>
-      <button class="tab" data-layer="Reads">Reads</button>
-      <button class="tab" data-layer="History">History</button>
-      <button class="tab" data-layer="Prefix">Static Prefix</button>
-      <button class="tab" data-layer="Streams">Observations</button>
-      <button class="tab" data-layer="Output">Output</button>
-    </div>
-    <div class="card" style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr><th>Technique / Tool</th><th>Layer</th><th>Component Impact</th><th>Full-Session / Cost Impact</th><th>Quality Risk</th><th>Proof</th></tr>
-        </thead>
-        <tbody id="lb-body"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="architecture">
-    <h2>4-Layer Lossless Token &amp; Cost Pipeline</h2>
-    <p class="sub">Targets the highest-amplification drivers first — file reads (64%), static prefix, history compaction, and lossless stream spill.</p>
-    <div class="card" style="padding:14px">
-      <img src="assets/architecture-flow.svg" onerror="this.src='../assets/architecture-flow.svg'" style="width:100%;display:block" alt="efficient-ai 4-layer architecture" />
+  <!-- ── OBSIDIAN 1-CLICK INSTALL RAIL ── -->
+  <section class="install-band" id="install-track" aria-label="One-click installation">
+    <div class="install-inner">
+      <div>
+        <div class="platform-tabs" id="install-tabs" role="tablist" aria-label="Select platform or agent">
+          <button type="button" role="tab" aria-selected="true" class="ptab active" data-cmd="curl -fsSL https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.sh | sh && eai init">macOS / Linux</button>
+          <button type="button" role="tab" aria-selected="false" class="ptab" data-cmd="irm https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.ps1 | iex; eai init">Windows PowerShell</button>
+          <button type="button" role="tab" aria-selected="false" class="ptab" data-cmd="/plugin marketplace add hatimmakki/efficient-ai && /plugin install efficient-ai@efficient-ai">Claude Code</button>
+          <button type="button" role="tab" aria-selected="false" class="ptab" data-cmd="agy plugin install https://github.com/hatimmakki/efficient-ai">Antigravity</button>
+          <button type="button" role="tab" aria-selected="false" class="ptab" data-cmd="gemini extensions install https://github.com/hatimmakki/efficient-ai">Gemini CLI</button>
+          <button type="button" role="tab" aria-selected="false" class="ptab" data-cmd="codex plugin marketplace add https://github.com/hatimmakki/efficient-ai.git && eai init --agents codex">Codex CLI</button>
+          <button type="button" role="tab" aria-selected="false" class="ptab" data-cmd="eai init --agents cursor">Cursor / MCP</button>
+        </div>
+        <div class="cmd-line">
+          <span class="cmd-prompt" aria-hidden="true">$</span>
+          <code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/hatimmakki/efficient-ai/master/install.sh | sh && eai init</code>
+        </div>
+      </div>
+      <button type="button" class="copy-latch" id="copy-btn">
+        <span id="copy-label">COPY INSTALL</span>
+      </button>
     </div>
   </section>
 
-  <footer>
-    <strong>efficient-ai v1.0.0</strong> · Apache-2.0 Open Source · 100% Local &amp; Privacy-First ·
-    <a href="https://github.com/hatimmakki/efficient-ai" style="color:var(--accent);font-weight:700;text-decoration:none">github.com/hatimmakki/efficient-ai</a>
-  </footer>
-</div>
+  <!-- ── COST MECHANICS ── -->
+  <section class="section-band" id="plumbing">
+    <div class="section-wrap">
+      <div class="sec-head">
+        <h2>Why Single-Stream Token Wrappers Backfire</h2>
+        <span class="sec-meta num">VERIFIED EXP 003 · 315 SESSIONS · 13,370 TURNS · 2.59B TOKENS</span>
+      </div>
+      <p class="sec-intro">Wrappers that only trim <code>git</code> or <code>pytest</code> stdout target less than 7% of tool exposure. When lossy filters drop one needed error line, a single recovery turn wipes out four to six compressed commands.</p>
+
+      <div class="plumbing-bar-block">
+        <div class="plumbing-bar-top">
+          <h3>Where Tool Tokens Actually Come From (First-Occurrence Share)</h3>
+          <span class="sec-meta num">FILE READING = 63.9% VS. BUILD / TEST / GIT = 6.8%</span>
+        </div>
+        <div class="meter-track" role="img" aria-label="Tool token composition: 63.9 percent file reading, 9.0 percent search, 7.9 percent MCP tools, 6.8 percent build test and git output, 12.4 percent other">
+          <div class="seg seg-reads num">File Reads 63.9%</div>
+          <div class="seg seg-search num">9.0%</div>
+          <div class="seg seg-mcp num">7.9%</div>
+          <div class="seg seg-streams num">6.8%</div>
+          <div class="seg seg-other num">12.4%</div>
+        </div>
+        <div class="meter-legend num">
+          <span><i class="ml-dot" style="background:var(--cobalt)"></i><strong>File Reading (63.9%):</strong> 41.4% Read + 22.5% cat/sed/head</span>
+          <span><i class="ml-dot" style="background:#245B9E"></i><strong>Search (9.0%):</strong> rg/grep/find/Glob</span>
+          <span><i class="ml-dot" style="background:#366891"></i><strong>MCP Tools (7.9%):</strong> 60.0× amplification</span>
+          <span><i class="ml-dot" style="background:var(--vermilion)"></i><strong>Build / Test / Git (6.8%):</strong> where typical wrappers stop</span>
+          <span><i class="ml-dot" style="background:#4E5D6E"></i><strong>Sub-agents &amp; Other (12.4%):</strong> sub-agent returns re-sent 233×</span>
+        </div>
+      </div>
+
+      <div class="laws-ledger">
+        <div class="law-cell">
+          <div class="law-fig num">54.4×</div>
+          <h3 class="law-title">Quadratic Turn Re-Send</h3>
+          <p class="law-copy">Every new token injected early is re-sent 54.4× on average across the trajectory, and sub-agent returns to parent sessions are re-sent <strong>233×</strong>.</p>
+        </div>
+        <div class="law-cell">
+          <div class="law-fig num">66.7%</div>
+          <h3 class="law-title">Cache Reads Dominate Cost</h3>
+          <p class="law-copy">Across 2.59B measured tokens, 97.78% of raw tokens (and 66.7% of billed USD) are <code>0.1×</code> prompt-cache reads, while 1.83% cache writes eat 20.1% of spend.</p>
+        </div>
+        <div class="law-cell">
+          <div class="law-fig red num">21,300</div>
+          <h3 class="law-title">Recovery-Loop Tax</h3>
+          <p class="law-copy">At ~193k mean context, one extra turn caused by a dropped error line burns ~21,300 cost-weighted tokens, erasing 4–6 compressed commands.</p>
+        </div>
+        <div class="law-cell">
+          <div class="law-fig red num">+111.8%</div>
+          <h3 class="law-title">Per-Turn Pruning Trap</h3>
+          <p class="law-copy">Sliding-window pruning mutates the prefix every turn, turning <code>0.1×</code> reads into <code>1.25×</code> cache writes and raising Claude bills by +9.2% to +111.8%.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── INTERACTIVE PROMPT-CACHE & COST SIMULATOR ── -->
+  <section class="section-band alt" id="calculator">
+    <div class="section-wrap">
+      <div class="sec-head">
+        <h2>Prompt-Cache &amp; Cost Simulator</h2>
+        <span class="sec-meta num">ILLUSTRATIVE SYNTHETIC LCP MODEL · CALIBRATED TO EXP 003–008</span>
+      </div>
+      <p class="sec-intro">Synthetic single-session projection distinct from the verified 315-session Exp 008 replay (−27.1% Claude, −32.5% Gemini, −37.6% Codex). Adjust your agent and session parameters to see both the fareboard and top timetable recompute live.</p>
+
+      <div class="sim-grid">
+        <div class="sim-controls">
+          <div class="field-group">
+            <label class="field-label" for="c-agent"><span>Agent / Pricing Model</span></label>
+            <select id="c-agent" class="rail-select">
+              <option value="claude">Claude Code · Sonnet ($3/$15 · 0.10× read · 1.25× write)</option>
+              <option value="antigravity">Antigravity / Gemini Pro ($1.25/$10 · 0.25× read)</option>
+              <option value="codex">Codex CLI · GPT-5 ($1.50/$10 · 0.50× read)</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="c-sess"><span>Sessions per Month</span><span class="field-val num" id="v-sess">60</span></label>
+            <input id="c-sess" class="rail-range" type="range" min="10" max="300" step="10" value="60" />
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="c-turns"><span>Turns per Session (T)</span><span class="field-val num" id="v-turns">40</span></label>
+            <input id="c-turns" class="rail-range" type="range" min="10" max="100" step="5" value="40" />
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="c-pref"><span>Idle Static Prefix (AGENTS.md + Skills + MCP)</span><span class="field-val num" id="v-pref">8,000 tok</span></label>
+            <input id="c-pref" class="rail-range" type="range" min="500" max="25000" step="500" value="8000" />
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="c-obs"><span>Avg Tool Observation / Turn</span><span class="field-val num" id="v-obs">1,800 tok</span></label>
+            <input id="c-obs" class="rail-range" type="range" min="400" max="5000" step="100" value="1800" />
+          </div>
+
+          <div class="sim-sync-note">
+            Active layers synced with top timetable: <strong id="sim-layers-summary">01 Prefix · 02 Outline · 03 Squeeze · 04 Batch Mask</strong>.<br />
+            Run <code>eai proxy --simulate session.jsonl</code> locally to replay your own real transcripts.
+          </div>
+        </div>
+
+        <div class="sim-fareboard">
+          <div class="fare-header num">
+            <span>SYNTHETIC MONTHLY BILL PROJECTION / DEVELOPER</span>
+            <span id="fare-k-badge">FIXED BOUNDARY K=12 · M=6</span>
+          </div>
+
+          <div class="fare-rows" aria-live="polite">
+            <div class="fare-row">
+              <div>
+                <div class="fare-title-line"><span class="fare-name">1. Vanilla Baseline</span></div>
+                <div class="fare-meta num" id="r-base-meta">1.80M raw tok/sess · 95.5% cache hit</div>
+              </div>
+              <div class="fare-amount num" id="r-base">$58/mo</div>
+              <div class="fare-bar-wrap"><div class="fare-bar-fill" id="bar-base" style="width:56.4%"></div></div>
+            </div>
+
+            <div class="fare-row bad">
+              <div>
+                <div class="fare-title-line">
+                  <span class="fare-name">2. Naive Per-Turn Pruning (M=6)</span>
+                  <span class="fare-tag bad">CACHE BUST</span>
+                </div>
+                <div class="fare-meta num" id="r-naive-meta">Cache hit collapses to 47.7%; cache writes explode every turn</div>
+              </div>
+              <div class="fare-amount num" id="r-naive">$103/mo (+76%)</div>
+              <div class="fare-bar-wrap"><div class="fare-bar-fill" id="bar-naive" style="width:100%"></div></div>
+            </div>
+
+            <div class="fare-row good">
+              <div>
+                <div class="fare-title-line">
+                  <span class="fare-name" id="r-eai-label">3. Full efficient-ai Stack (All 4 Layers Active)</span>
+                  <span class="fare-tag good">CACHE SAFE</span>
+                </div>
+                <div class="fare-meta num" id="r-eai-meta">0.59M raw tok/sess · 88.0% cache hit preserved</div>
+              </div>
+              <div class="fare-amount num" id="r-eai">$33/mo (−43%)</div>
+              <div class="fare-bar-wrap"><div class="fare-bar-fill" id="bar-eai" style="width:31.7%"></div></div>
+            </div>
+          </div>
+
+          <div class="fare-summary">
+            <div>
+              <div class="fare-headline num" id="r-headline">Estimated savings: $25/month ($300/year) per developer</div>
+              <div class="fare-sub">Illustrative LCP model calibrated from Experiments 003–008 (zero recovery loops, byte-identical local spill).</div>
+            </div>
+            <a class="btn-solid" href="#install-track">
+              Install eai
+              <svg class="ic-sm" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 11V3M3 7L7 3L11 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── EMPIRICAL TECHNIQUE LEADERBOARD ── -->
+  <section class="section-band" id="leaderboard">
+    <div class="section-wrap">
+      <div class="sec-head">
+        <h2>Empirical Technique Leaderboard</h2>
+        <span class="sec-meta num">EXPERIMENTS 001–008 · REPRODUCIBLE ON PUBLIC CORPUS</span>
+      </div>
+      <p class="sec-intro">Every positive win and every myth we busted is backed by executable scripts in <code>experiments/</code> and paired multi-turn trajectory replay.</p>
+
+      <div class="filter-rail" id="lb-filters" role="group" aria-label="Filter leaderboard by optimization layer">
+        <button type="button" class="ftab active" data-layer="all">All Layers</button>
+        <button type="button" class="ftab" data-layer="Reads">Reads</button>
+        <button type="button" class="ftab" data-layer="History">History</button>
+        <button type="button" class="ftab" data-layer="Prefix">Static Prefix</button>
+        <button type="button" class="ftab" data-layer="Streams">Observations</button>
+        <button type="button" class="ftab" data-layer="Output">Output</button>
+      </div>
+
+      <div class="schedule-wrap">
+        <table class="schedule">
+          <thead>
+            <tr>
+              <th>Technique / Tool</th>
+              <th>Layer</th>
+              <th>Stream / Component Impact</th>
+              <th>Full-Session / Cost Impact</th>
+              <th>Quality Risk</th>
+              <th>Proof</th>
+            </tr>
+          </thead>
+          <tbody id="lb-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4-LAYER LOSSLESS ROUTE TRACK & DAILY CLI ── -->
+  <section class="section-band alt" id="pipeline">
+    <div class="section-wrap">
+      <div class="sec-head">
+        <h2>4-Layer Lossless Pipeline &amp; Local CLI</h2>
+        <span class="sec-meta num">100% LOCAL RUST BINARY · ZERO CLOUD TELEMETRY</span>
+      </div>
+      <p class="sec-intro">Each station targets the next largest token-amplification driver in empirical order, never dropping diagnostics silently and never sending session data off your machine.</p>
+
+      <div class="route-rail-wrap">
+        <div class="route-stations">
+          <article class="station">
+            <div class="station-node-row">
+              <span class="st-node num" aria-label="Station 1">01</span>
+              <span class="st-rail-seg" aria-hidden="true"></span>
+            </div>
+            <div class="station-body">
+              <div class="station-head-row">
+                <h3>Static-Prefix Diet</h3>
+                <span class="st-share num">−67.9% IDLE</span>
+              </div>
+              <p>Runs before turn 1 to audit and minify <code>AGENTS.md</code>, skill metadata, and MCP schemas. Built-in <code>eai mcp</code> stays at 248 idle tokens across 4 tools.</p>
+              <div class="st-cmd">$ eai audit . --include-user --fix</div>
+            </div>
+          </article>
+
+          <article class="station">
+            <div class="station-node-row">
+              <span class="st-node num" aria-label="Station 2">02</span>
+              <span class="st-rail-seg" aria-hidden="true"></span>
+            </div>
+            <div class="station-body">
+              <div class="station-head-row">
+                <h3>Tree-Sitter AST Outline</h3>
+                <span class="st-share num">−47.2% READS</span>
+              </div>
+              <p>Targets the 63.9% file-read share on files &gt;200 lines: prints symbol signatures with <code>[Lstart-Lend]</code> spans, then fetches only the needed symbol.</p>
+              <div class="st-cmd">$ eai outline file.py --symbol parse</div>
+            </div>
+          </article>
+
+          <article class="station">
+            <div class="station-node-row">
+              <span class="st-node num" aria-label="Station 3">03</span>
+              <span class="st-rail-seg" aria-hidden="true"></span>
+            </div>
+            <div class="station-body">
+              <div class="station-head-row">
+                <h3>Lossless Stream Squeeze</h3>
+                <span class="st-share num">−92.6% LOGS</span>
+              </div>
+              <p>Compresses verbose test/build noise across 15+ runners while keeping 100% of errors, guards 3× stuck loops (H7), and spills raw bytes to <code>.eai/logs/</code>.</p>
+              <div class="st-cmd">$ eai squeeze -- pytest -v</div>
+            </div>
+          </article>
+
+          <article class="station">
+            <div class="station-node-row">
+              <span class="st-node num" aria-label="Station 4">04</span>
+            </div>
+            <div class="station-body">
+              <div class="station-head-row">
+                <h3>Cache-Aware Batch Proxy</h3>
+                <span class="st-share num">−37.6% USD</span>
+              </div>
+              <p>Opt-in local proxy compacting old tool outputs (&gt;6 turns) only at fixed <code>K=12</code> turn boundaries, protecting <code>0.1×</code> prompt-cache reads across providers.</p>
+              <div class="st-cmd">$ eai proxy --provider anthropic</div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="cli-ledger">
+        <div class="cli-side">
+          <div>
+            <h3>One Binary.<br>Zero Cloud.<br>Cleanly Reversible.</h3>
+            <p style="margin-top:12px">Inspect your real spend before changing a single config file, track Before vs. After savings per repository, or pause/uninstall anytime.</p>
+          </div>
+          <a class="btn-line" href="https://github.com/hatimmakki/efficient-ai/blob/master/README.md" style="border-color:#FFFFFF">
+            Read Full Docs
+            <svg class="ic-sm" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 11L11 3M5 3H11V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+          </a>
+        </div>
+        <div class="cli-rows">
+          <div class="cli-item">
+            <code>eai analyze --since 14d</code>
+            <span>Auto-discovers Claude Code, Antigravity, Gemini CLI &amp; Codex transcripts with estimated USD.</span>
+          </div>
+          <div class="cli-item">
+            <code>eai init</code>
+            <span>Auto-detects installed agents, merges hooks safely, writes lean rules &amp; captures baseline.</span>
+          </div>
+          <div class="cli-item">
+            <code>eai impact --project .</code>
+            <span>Strict repo-scoped Before vs. After proof: USD/session, cache hit rate &amp; recovery rate.</span>
+          </div>
+          <div class="cli-item">
+            <code>eai dashboard</code>
+            <span>Offline local web UI on <code>127.0.0.1:7420</code> with live charts, project switcher &amp; SVG export.</span>
+          </div>
+          <div class="cli-item">
+            <code>eai share --out proof.svg</code>
+            <span>Generates a privacy-sanitized SVG efficiency proof card with zero code or path leaks.</span>
+          </div>
+          <div class="cli-item">
+            <code>eai doctor / eai uninstall</code>
+            <span>Verifies &lt;10 ms hook latency and prefix health, or cleanly strips all managed blocks.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="terminus">
+  <div class="terminus-inner">
+    <div>
+      <div class="term-brand">
+        <span class="brand-code">EAI</span>
+        <span>efficient-ai v1.1.0</span>
+      </div>
+      <div class="term-sub">Apache-2.0 Open Source · 100% Local &amp; Offline · Zero Telemetry</div>
+    </div>
+    <div class="term-links">
+      <a href="https://github.com/hatimmakki/efficient-ai">GitHub</a>
+      <a href="https://github.com/hatimmakki/efficient-ai/releases/tag/v1.1.0">Releases (v1.1.0)</a>
+      <a href="https://github.com/hatimmakki/efficient-ai/tree/master/experiments">Experiments 001–009</a>
+      <a href="#install-track">
+        Back to Install
+        <svg class="ic-sm" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 11V3M3 7L7 3L11 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+      </a>
+    </div>
+  </div>
+</footer>
 
 <script>
-const tabs = document.querySelectorAll('#install-tabs .tab');
-const cmdEl = document.getElementById('install-cmd');
-tabs.forEach(t => t.addEventListener('click', () => {
-  tabs.forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
-  cmdEl.textContent = t.dataset.cmd;
-}));
-document.getElementById('copy-btn').addEventListener('click', () => {
-  navigator.clipboard?.writeText(cmdEl.textContent);
-  const b = document.getElementById('copy-btn');
-  b.textContent = 'Copied!';
-  setTimeout(() => b.textContent = 'Copy', 1500);
-});
+(() => {
+  const EXT_SVG = '<svg class="ic-sm" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 11L11 3M5 3H11V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/></svg>';
+  const CHECK_SVG = '<svg class="ic" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 7.5L5.5 11L12 3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/></svg>';
 
-const PROVIDERS = {
-  claude:      { usdM: 3.00, wRead: 0.10, wWrite: 1.25, wOut: 5.0, k: 12 },
-  antigravity: { usdM: 1.25, wRead: 0.25, wWrite: 1.00, wOut: 4.0, k: 10 },
-  codex:       { usdM: 1.50, wRead: 0.50, wWrite: 1.00, wOut: 4.0, k: 8  },
-};
+  // ── 1. Platform 1-Click Install Switcher ──
+  const installTabs = document.querySelectorAll('#install-tabs .ptab');
+  const installCmd = document.getElementById('install-cmd');
+  const copyBtn = document.getElementById('copy-btn');
 
-function sim(T, S, obsTok, mode, p) {
-  let prev = [], rawIn = 0, cRead = 0, cWrite = 0;
-  const M = 6, ph = 24;
-  for (let t = 0; t < T; t++) {
-    let cur = [S];
-    let limit = mode === 'baseline' ? 0 : mode === 'naive' ? Math.max(0, t + 1 - M) : Math.floor(Math.max(0, t + 1 - M) / p.k) * p.k;
-    for (let i = 0; i <= t; i++) cur.push(i < limit ? ph : obsTok);
-    let lcp = 0;
-    for (let i = 0; i < Math.min(prev.length, cur.length); i++) {
-      if (prev[i] === cur[i]) lcp += cur[i]; else break;
+  installTabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      installTabs.forEach(x => {
+        x.classList.remove('active');
+        x.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      installCmd.textContent = btn.dataset.cmd;
+    });
+  });
+
+  let copyTimer = null;
+  copyBtn.addEventListener('click', () => {
+    const text = installCmd.textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
     }
-    const tot = cur.reduce((a,b) => a + b, 0);
-    rawIn += tot; cRead += lcp; cWrite += (tot - lcp);
-    prev = cur;
+    copyBtn.innerHTML = CHECK_SVG + '<span>COPIED</span>';
+    copyBtn.classList.add('copied');
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => {
+      copyBtn.innerHTML = '<span id="copy-label">COPY INSTALL</span>';
+      copyBtn.classList.remove('copied');
+    }, 1700);
+  });
+
+  // ── 2. Exact LCP Simulation Engine (Linked Daiya Timetable + Fareboard) ──
+  const PROVIDERS = {
+    claude:      { label: 'CLAUDE SONNET',        usdM: 3.00, wRead: 0.10, wWrite: 1.25, wOut: 5.0, k: 12 },
+    antigravity: { label: 'ANTIGRAVITY / GEMINI', usdM: 1.25, wRead: 0.25, wWrite: 1.00, wOut: 4.0, k: 10 },
+    codex:       { label: 'CODEX CLI / GPT-5',    usdM: 1.50, wRead: 0.50, wWrite: 1.00, wOut: 4.0, k: 8  },
+  };
+
+  const activeLayers = { prefix: true, outline: true, squeeze: true, proxy: true };
+  let hoveredTurn = null;
+  let lastSeries = null;
+  let renderedCoords = null;
+  let animRaf = null;
+
+  const fmtPct = (v) => {
+    const rounded = Math.round(v);
+    if (rounded < 0) return `\u2212${Math.abs(rounded)}%`;
+    return `+${rounded}%`;
+  };
+
+  // Compaction triggers strictly on K, 2K, 3K... turns while keeping the recent M=6 turns intact
+  function simulateSeries(T, S, obsTok, mode, p, outFactor) {
+    let prev = [];
+    let rawIn = 0, cRead = 0, cWrite = 0, cumUsd = 0;
+    const M = 6, ph = 24;
+    const points = [];
+    for (let t = 0; t < T; t++) {
+      const turn = t + 1;
+      const cur = [S];
+      let limit = 0;
+      let isStation = false;
+      if (mode === 'naive') {
+        limit = Math.max(0, turn - M);
+      } else if (mode === 'batch') {
+        const boundary = Math.floor(turn / p.k) * p.k;
+        limit = boundary >= p.k ? Math.max(0, boundary - M) : 0;
+        isStation = turn >= p.k && (turn % p.k === 0) && limit > 0;
+      }
+      for (let i = 0; i <= t; i++) {
+        cur.push(i < limit ? ph : obsTok);
+      }
+      let lcp = 0;
+      const minLen = Math.min(prev.length, cur.length);
+      for (let i = 0; i < minLen; i++) {
+        if (prev[i] === cur[i]) lcp += cur[i];
+        else break;
+      }
+      let tot = 0;
+      for (let i = 0; i < cur.length; i++) tot += cur[i];
+      const turnWrite = tot - lcp;
+      rawIn += tot;
+      cRead += lcp;
+      cWrite += turnWrite;
+      const turnOut = 260 * outFactor;
+      const turnCw = lcp * p.wRead + turnWrite * p.wWrite + turnOut * p.wOut;
+      cumUsd += (turnCw / 1e6) * p.usdM;
+      points.push({
+        t: turn,
+        usd: cumUsd,
+        cacheHit: (100 * cRead) / Math.max(1, rawIn),
+        isStation
+      });
+      prev = cur;
+    }
+    return {
+      rawIn,
+      cacheHit: (100 * cRead) / Math.max(1, rawIn),
+      usd: cumUsd,
+      points
+    };
   }
-  const outTok = T * 260 * (mode === 'eai' ? 0.85 : 1.0);
-  const cw = cRead * p.wRead + cWrite * p.wWrite + outTok * p.wOut;
-  return { rawIn, cacheHit: 100 * cRead / Math.max(1, rawIn), usd: (cw / 1e6) * p.usdM };
-}
 
-function updateCalc() {
-  const p = PROVIDERS[document.getElementById('c-agent').value];
-  const sess = +document.getElementById('c-sess').value;
-  const T = +document.getElementById('c-turns').value;
-  const S = +document.getElementById('c-pref').value;
-  const obs = +document.getElementById('c-obs').value;
-  document.getElementById('v-sess').textContent = sess;
-  document.getElementById('v-turns').textContent = T;
-  document.getElementById('v-pref').textContent = S.toLocaleString() + ' tok';
-  document.getElementById('v-obs').textContent = obs.toLocaleString() + ' tok';
+  function chartMetrics() {
+    const compact = window.innerWidth <= 600;
+    return compact
+      ? { compact: true, W: 420, H: 230, padL: 48, padR: 12, padT: 20, padB: 28, axisFs: 11, labelFs: 12.5, dotR: 4.5 }
+      : { compact: false, W: 820, H: 300, padL: 62, padR: 18, padT: 24, padB: 34, axisFs: 12, labelFs: 16.5, dotR: 5.5 };
+  }
 
-  const base = sim(T, S, obs, 'baseline', p);
-  const naive = sim(T, S, obs, 'naive', p);
-  // eai cuts prefix by ~65% (floor 800) + obs by ~32% (outline + squeeze) + Exp 007 batch masking
-  const eaiS = Math.max(800, Math.round(S * 0.35));
-  const eaiObs = Math.round(obs * 0.68);
-  const eai = sim(T, eaiS, eaiObs, 'eai', p);
+  function sampleCoords(series, T, maxY, m) {
+    const plotW = m.W - m.padL - m.padR;
+    const plotH = m.H - m.padT - m.padB;
+    const xOf = (turn) => m.padL + ((turn - 1) / Math.max(1, T - 1)) * plotW;
+    const yOf = (usd) => m.padT + plotH - (usd / maxY) * plotH;
+    const mapPts = (pts) => pts.map(pt => ({ x: xOf(pt.t), y: yOf(pt.usd), t: pt.t, isStation: pt.isStation }));
+    return {
+      naive: mapPts(series.naive.points),
+      base: mapPts(series.base.points),
+      eai: mapPts(series.eai.points),
+      xOf, yOf, plotW, plotH
+    };
+  }
 
-  const bMo = base.usd * sess, nMo = naive.usd * sess, eMo = eai.usd * sess;
-  const nDelta = 100 * (nMo - bMo) / Math.max(0.01, bMo);
-  const eDelta = 100 * (eMo - bMo) / Math.max(0.01, bMo);
+  function applyCoordsToSvg(coords, T, p, base, naive, eai, m) {
+    const pathD = (arr) => arr.map((pt, i) => `${i === 0 ? 'M' : 'L'}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
+    document.getElementById('path-naive').setAttribute('d', pathD(coords.naive));
+    document.getElementById('path-base').setAttribute('d', pathD(coords.base));
+    document.getElementById('path-eai').setAttribute('d', pathD(coords.eai));
 
-  document.getElementById('r-base').textContent = `$${bMo.toFixed(0)}/mo`;
-  document.getElementById('r-base-meta').textContent = `${(base.rawIn/1e6).toFixed(2)}M raw tok/sess · ${base.cacheHit.toFixed(1)}% cache hit`;
-  document.getElementById('r-naive').textContent = `$${nMo.toFixed(0)}/mo (${nDelta >= 0 ? '+' : ''}${nDelta.toFixed(0)}%)`;
-  document.getElementById('r-naive-meta').textContent = `Cache drops to ${naive.cacheHit.toFixed(1)}% — cache writes explode!`;
-  document.getElementById('r-eai').textContent = `$${eMo.toFixed(0)}/mo (${eDelta.toFixed(0)}%)`;
-  document.getElementById('r-eai-meta').textContent = `${(eai.rawIn/1e6).toFixed(2)}M raw tok/sess · ${eai.cacheHit.toFixed(1)}% cache hit preserved`;
-  document.getElementById('r-headline').textContent = `Estimated savings: $${Math.max(0, bMo - eMo).toFixed(0)}/month ($${Math.max(0, (bMo - eMo)*12).toFixed(0)}/year) per developer with 0 recovery loops.`;
-}
-['c-agent','c-sess','c-turns','c-pref','c-obs'].forEach(id => document.getElementById(id).addEventListener('input', updateCalc));
-updateCalc();
+    const areaPts = [
+      ...coords.base.map(pt => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`),
+      ...coords.eai.slice().reverse().map(pt => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`)
+    ].join(' ');
+    document.getElementById('area-save').setAttribute('points', areaPts);
 
-const LEADERBOARD = [
-  { name: 'eai Full Stack (outline + squeeze + proxy)', layer: 'Reads', comp: '7.9 ms hook · 248 tok MCP · 100% pass', full: '-27.1% to -37.6% billed USD across 4 agents', risk: 'None (lossless)', exp: 'Exp 008', good: true },
-  { name: 'eai outline (tree-sitter AST reader)', layer: 'Reads', comp: '-66% to -96% explore · -57% to -90% combined', full: '-37.9% to -47.2% read tokens (118M avoided)', risk: 'Low (lossless)', exp: 'Exp 005 / 008', good: true },
-  { name: 'eai proxy Cache-Aware Batch Mask (K=12, M=6)', layer: 'History', comp: 'Prefix-stable boundaries · cache-bust alerts', full: '-9.6% to -10.5% Claude · -21.0% Codex USD', risk: 'Low', exp: 'Exp 007', good: true },
-  { name: 'Static-Prefix Diet (eai audit --fix)', layer: 'Prefix', comp: '-85% instruction file · -65% MCP/skill tax', full: '-67.9% idle prefix (320k raw tok / 50 turns)', risk: 'None', exp: 'Exp 004', good: true },
-  { name: 'eai squeeze (Lossless spill + H7 loop guard)', layer: 'Streams', comp: '-94% to -97% pytest/cargo/go · 100% errors kept', full: 'Zero recovery loops (byte-identical .eai/logs)', risk: 'None (retrievable)', exp: 'Exp 006 / 008', good: true },
-  { name: 'Prose-Only Brevity (AGENTS.md H6)', layer: 'Output', comp: '-65.3% assistant reply prose', full: '78.5% of caveman savings with intact code', risk: 'Low', exp: 'Exp 004', good: true },
-  { name: 'Naive Per-Turn History Pruning', layer: 'History', comp: '-52% raw tokens (misleading!)', full: '+9.2% to +111.8% HIGHER Claude API bill', risk: 'Cache bust!', exp: 'Exp 007', good: false },
-  { name: 'Code Indentation Reformatting (tabs/2-space)', layer: 'Reads', comp: '0.0% (2-space) · +1.9% worse (tabs)', full: 'Myth busted — modern BPE merges spaces', risk: 'Pointless', exp: 'Exp 001', good: false },
-];
+    // Station markers strictly on actual compaction turns (pt.isStation)
+    let stationsHtml = '';
+    if (activeLayers.proxy) {
+      for (let i = 0; i < coords.eai.length; i++) {
+        const pt = coords.eai[i];
+        if (!pt.isStation) continue;
+        stationsHtml += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${m.dotR}" fill="#FFFFFF" stroke="#0F7B5F" stroke-width="3" />`;
+      }
+    }
+    document.getElementById('g-stations').innerHTML = stationsHtml;
 
-function renderLB(filter) {
-  const rows = filter === 'all' ? LEADERBOARD : LEADERBOARD.filter(r => r.layer === filter);
-  document.getElementById('lb-body').innerHTML = rows.map(r => `<tr>
-    <td><strong>${r.name}</strong></td>
-    <td><span class="pill pill-indigo">${r.layer}</span></td>
-    <td>${r.comp}</td>
-    <td><span class="pill ${r.good ? 'pill-good' : 'pill-bad'}">${r.full}</span></td>
-    <td>${r.risk}</td>
-    <td>${r.exp}</td>
-  </tr>`).join('');
-}
-document.querySelectorAll('#lb-filters .tab').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('#lb-filters .tab').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
-  renderLB(b.dataset.layer);
-}));
-renderLB('all');
+    // Labels placed completely clear of strokes & station markers across their horizontal span
+    const lastN = coords.naive[coords.naive.length - 1];
+    const lastB = coords.base[coords.base.length - 1];
+    const lastE = coords.eai[coords.eai.length - 1];
+    const nDelta = 100 * (naive.usd - base.usd) / Math.max(0.0001, base.usd);
+    const eDelta = 100 * (eai.usd - base.usd) / Math.max(0.0001, base.usd);
+
+    const clampY = (y) => Math.max(m.padT + m.labelFs + 2, Math.min(m.padT + m.plotH - 8, y));
+    const gap = m.compact ? 17 : 23;
+    const labelSpanStart = (m.W - m.padR - 4) - (m.compact ? 118 : 238);
+    let maxEaiYInSpan = lastE.y;
+    for (let i = 0; i < coords.eai.length; i++) {
+      if (coords.eai[i].x >= labelSpanStart && coords.eai[i].y > maxEaiYInSpan) {
+        maxEaiYInSpan = coords.eai[i].y;
+      }
+    }
+    const yN = clampY(lastN.y - 10);
+    let yB = clampY(lastB.y - 12);
+    if (Math.abs(yB - yN) < gap) yB = clampY(yN + gap);
+    let yE = clampY(maxEaiYInSpan + (m.compact ? 18 : 24));
+    if (Math.abs(yE - yB) < gap) yE = clampY(yB + gap);
+
+    const nTxt = m.compact ? `NAIVE ${fmtPct(nDelta)}` : `NAIVE ${fmtPct(nDelta)} ($${naive.usd.toFixed(2)}/sess)`;
+    const bTxt = m.compact ? `VANILLA $${base.usd.toFixed(2)}` : `VANILLA $${base.usd.toFixed(2)}/sess`;
+    const eTxt = m.compact ? `eai ${fmtPct(eDelta)}` : `eai ${fmtPct(eDelta)} ($${eai.usd.toFixed(2)}/sess)`;
+
+    document.getElementById('g-labels').innerHTML = `
+      <text x="${m.W - m.padR - 4}" y="${yN.toFixed(1)}" text-anchor="end" fill="#B4250F" paint-order="stroke" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" font-family="Archivo, sans-serif" font-weight="900" font-size="${m.labelFs}">${nTxt}</text>
+      <text x="${m.W - m.padR - 4}" y="${yB.toFixed(1)}" text-anchor="end" fill="#11161D" paint-order="stroke" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" font-family="Archivo, sans-serif" font-weight="800" font-size="${m.labelFs - 1.5}">${bTxt}</text>
+      <text x="${m.W - m.padR - 4}" y="${yE.toFixed(1)}" text-anchor="end" fill="#0A634C" paint-order="stroke" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" font-family="Archivo, sans-serif" font-weight="900" font-size="${m.labelFs + 0.5}">${eTxt}</text>
+    `;
+
+    // Cursor & Turn Inspector
+    const cursorT = hoveredTurn ? Math.min(T, Math.max(1, hoveredTurn)) : T;
+    const ptN = naive.points[cursorT - 1];
+    const ptB = base.points[cursorT - 1];
+    const ptE = eai.points[cursorT - 1];
+    const cN = coords.naive[cursorT - 1];
+    const cB = coords.base[cursorT - 1];
+    const cE = coords.eai[cursorT - 1];
+    document.getElementById('g-cursor').innerHTML = hoveredTurn ? `
+      <line x1="${cE.x.toFixed(1)}" y1="${m.padT}" x2="${cE.x.toFixed(1)}" y2="${m.padT + m.plotH}" stroke="#0B4EA2" stroke-width="1.5" />
+      <circle cx="${cN.x.toFixed(1)}" cy="${cN.y.toFixed(1)}" r="4.5" fill="#D9381E" stroke="#FFFFFF" stroke-width="1.5" />
+      <circle cx="${cB.x.toFixed(1)}" cy="${cB.y.toFixed(1)}" r="4" fill="#11161D" stroke="#FFFFFF" stroke-width="1.5" />
+      <circle cx="${cE.x.toFixed(1)}" cy="${cE.y.toFixed(1)}" r="5" fill="#0F7B5F" stroke="#FFFFFF" stroke-width="1.5" />
+    ` : '';
+
+    document.getElementById('insp-turn').textContent = hoveredTurn
+      ? `TURN ${cursorT} / ${T} · SYNTHETIC SESSION MODEL`
+      : `TURN ${T} / ${T} · ILLUSTRATIVE LCP MODEL (HOVER TO INSPECT)`;
+    document.getElementById('insp-naive').textContent = `Naive: $${ptN.usd.toFixed(2)} (${ptN.cacheHit.toFixed(0)}% cache)`;
+    document.getElementById('insp-base').textContent = `Vanilla: $${ptB.usd.toFixed(2)} (${ptB.cacheHit.toFixed(0)}% cache)`;
+    document.getElementById('insp-eai').textContent = `eai: $${ptE.usd.toFixed(2)} (${ptE.cacheHit.toFixed(0)}% cache)`;
+  }
+
+  function renderDaiya(T, p, base, naive, eai, animate = true) {
+    const svg = document.getElementById('daiya-svg');
+    const m = chartMetrics();
+    svg.setAttribute('viewBox', `0 0 ${m.W} ${m.H}`);
+
+    const maxY = Math.max(0.05, naive.usd, base.usd, eai.usd) * 1.14;
+    const target = sampleCoords({ base, naive, eai }, T, maxY, m);
+    m.plotH = target.plotH;
+
+    // Gridlines (uniform 2-decimal USD ticks)
+    let gridHtml = '';
+    for (let i = 0; i <= 4; i++) {
+      const val = (maxY * i) / 4;
+      const y = target.yOf(val);
+      gridHtml += `<line x1="${m.padL}" y1="${y.toFixed(1)}" x2="${m.W - m.padR}" y2="${y.toFixed(1)}" stroke="${i === 0 ? '#11161D' : '#E2E8F0'}" stroke-width="${i === 0 ? 1.5 : 1}" />`;
+      gridHtml += `<text x="${m.padL - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="#4A5565" font-family="JetBrains Mono, monospace" font-size="${m.axisFs}" font-weight="700">$${val.toFixed(2)}</text>`;
+    }
+    document.getElementById('g-grid').innerHTML = gridHtml;
+
+    // Vertical boundary ticks strictly aligned with actual K compaction turns
+    let ticksHtml = '';
+    for (let k = p.k; k < T; k += p.k) {
+      const x = target.xOf(k);
+      ticksHtml += `<line x1="${x.toFixed(1)}" y1="${m.padT}" x2="${x.toFixed(1)}" y2="${m.padT + target.plotH}" stroke="#B8C7D9" stroke-width="1.2" stroke-dasharray="4 4" />`;
+      ticksHtml += `<text x="${x.toFixed(1)}" y="${m.H - 9}" text-anchor="middle" fill="#0B4EA2" font-family="JetBrains Mono, monospace" font-size="${m.axisFs}" font-weight="700">K=${k}</text>`;
+    }
+    ticksHtml += `<text x="${m.padL}" y="${m.H - 9}" text-anchor="start" fill="#4A5565" font-family="JetBrains Mono, monospace" font-size="${m.axisFs}" font-weight="700">T=1</text>`;
+    ticksHtml += `<text x="${m.W - m.padR}" y="${m.H - 9}" text-anchor="end" fill="#11161D" font-family="JetBrains Mono, monospace" font-size="${m.axisFs}" font-weight="700">T=${T}</text>`;
+    document.getElementById('g-ticks').innerHTML = ticksHtml;
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (animRaf) cancelAnimationFrame(animRaf);
+
+    if (!animate || reducedMotion || !renderedCoords || renderedCoords.eai.length !== target.eai.length || renderedCoords.W !== m.W) {
+      applyCoordsToSvg(target, T, p, base, naive, eai, m);
+      renderedCoords = { ...target, W: m.W };
+      return;
+    }
+
+    // Exponential ease-out curve morph across 280ms
+    const start = renderedCoords;
+    const t0 = performance.now();
+    const dur = 280;
+    const lerpArr = (a, b, ease) => b.map((pt, i) => ({
+      x: a[i].x + (pt.x - a[i].x) * ease,
+      y: a[i].y + (pt.y - a[i].y) * ease,
+      t: pt.t,
+      isStation: pt.isStation
+    }));
+
+    function frame(now) {
+      const prog = Math.min(1, (now - t0) / dur);
+      const ease = prog >= 1 ? 1 : 1 - Math.pow(2, -10 * prog);
+      const cur = {
+        naive: lerpArr(start.naive, target.naive, ease),
+        base: lerpArr(start.base, target.base, ease),
+        eai: lerpArr(start.eai, target.eai, ease),
+        W: m.W
+      };
+      applyCoordsToSvg(cur, T, p, base, naive, eai, m);
+      renderedCoords = cur;
+      if (prog < 1) {
+        animRaf = requestAnimationFrame(frame);
+      } else {
+        animRaf = null;
+      }
+    }
+    animRaf = requestAnimationFrame(frame);
+  }
+
+  function updateAll(animate = true) {
+    const agentKey = document.getElementById('c-agent').value;
+    const p = PROVIDERS[agentKey];
+    const sess = +document.getElementById('c-sess').value;
+    const T = +document.getElementById('c-turns').value;
+    const S = +document.getElementById('c-pref').value;
+    const obs = +document.getElementById('c-obs').value;
+
+    document.getElementById('v-sess').textContent = sess;
+    document.getElementById('v-turns').textContent = T;
+    document.getElementById('v-pref').textContent = S.toLocaleString() + ' tok';
+    document.getElementById('v-obs').textContent = obs.toLocaleString() + ' tok';
+    document.getElementById('daiya-title').textContent = `SYNTHETIC LCP MODEL · T=1 TO T=${T} · ${p.label}`;
+    document.getElementById('fare-k-badge').textContent = activeLayers.proxy
+      ? `FIXED BOUNDARY K=${p.k} · M=6`
+      : 'BATCH MASKING OFF (CORE STACK ONLY)';
+
+    const base = simulateSeries(T, S, obs, 'baseline', p, 1.0);
+    const naive = simulateSeries(T, S, obs, 'naive', p, 1.0);
+
+    const eaiS = activeLayers.prefix ? Math.max(800, Math.round(S * 0.35)) : S;
+    let obsFactor = 1.0;
+    if (activeLayers.outline) obsFactor -= 0.25;
+    if (activeLayers.squeeze) obsFactor -= 0.07;
+    const eaiObs = Math.round(obs * obsFactor);
+    const outFactor = activeLayers.squeeze ? 0.85 : 1.0;
+    const eaiMode = activeLayers.proxy ? 'batch' : 'baseline';
+    const eai = simulateSeries(T, eaiS, eaiObs, eaiMode, p, outFactor);
+
+    lastSeries = { T, p, base, naive, eai };
+    renderDaiya(T, p, base, naive, eai, animate);
+
+    const bMo = base.usd * sess;
+    const nMo = naive.usd * sess;
+    const eMo = eai.usd * sess;
+
+    // Reconcile displayed monthly and annual totals cleanly so subtraction and x12 always hold
+    const bDisp = Math.round(bMo);
+    const nDisp = Math.round(nMo);
+    const eDisp = Math.round(eMo);
+    const savedMo = Math.max(0, bDisp - eDisp);
+    const savedYr = savedMo * 12;
+
+    const nDelta = 100 * (nMo - bMo) / Math.max(0.01, bMo);
+    const eDelta = 100 * (eMo - bMo) / Math.max(0.01, bMo);
+    const maxMo = Math.max(1, bMo, nMo, eMo);
+
+    const activeList = [];
+    if (activeLayers.prefix) activeList.push('01 Prefix');
+    if (activeLayers.outline) activeList.push('02 Outline');
+    if (activeLayers.squeeze) activeList.push('03 Squeeze');
+    if (activeLayers.proxy) activeList.push('04 Batch Mask');
+    const count = activeList.length;
+
+    document.getElementById('sim-layers-summary').textContent = count > 0 ? activeList.join(' · ') : 'None (identical to baseline)';
+    document.getElementById('r-eai-label').textContent = count === 4
+      ? '3. Full efficient-ai Stack (All 4 Layers Active)'
+      : `3. efficient-ai Stack (${count} of 4 Layers Active)`;
+
+    document.getElementById('r-base').textContent = `$${bDisp}/mo`;
+    document.getElementById('r-base-meta').textContent = `${(base.rawIn / 1e6).toFixed(2)}M raw tok/sess · ${base.cacheHit.toFixed(1)}% cache hit`;
+    document.getElementById('r-naive').textContent = `$${nDisp}/mo (${fmtPct(nDelta)})`;
+    document.getElementById('r-naive-meta').textContent = `Cache hit collapses to ${naive.cacheHit.toFixed(1)}%; cache writes explode every turn`;
+    document.getElementById('r-eai').textContent = `$${eDisp}/mo (${fmtPct(eDelta)})`;
+    document.getElementById('r-eai-meta').textContent = `${(eai.rawIn / 1e6).toFixed(2)}M raw tok/sess · ${eai.cacheHit.toFixed(1)}% cache hit preserved`;
+
+    document.getElementById('bar-base').style.width = `${Math.max(4, (bMo / maxMo) * 100).toFixed(1)}%`;
+    document.getElementById('bar-naive').style.width = `${Math.max(4, (nMo / maxMo) * 100).toFixed(1)}%`;
+    document.getElementById('bar-eai').style.width = `${Math.max(4, (eMo / maxMo) * 100).toFixed(1)}%`;
+
+    document.getElementById('r-headline').textContent = count > 0
+      ? `Estimated savings: $${savedMo}/month ($${savedYr}/year) per developer`
+      : 'Enable one or more layers above to project savings.';
+  }
+
+  document.querySelectorAll('.layer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.layer;
+      activeLayers[key] = !activeLayers[key];
+      btn.setAttribute('aria-pressed', String(activeLayers[key]));
+      btn.querySelector('.layer-state').textContent = activeLayers[key] ? 'ON' : 'OFF';
+      updateAll(true);
+    });
+  });
+
+  const daiyaSvg = document.getElementById('daiya-svg');
+  function inspectFromPointer(evt) {
+    if (!lastSeries) return;
+    const m = chartMetrics();
+    const rect = daiyaSvg.getBoundingClientRect();
+    const relX = ((evt.clientX - rect.left) / rect.width) * m.W;
+    const frac = (relX - m.padL) / (m.W - m.padL - m.padR);
+    const turn = Math.round(1 + Math.max(0, Math.min(1, frac)) * (lastSeries.T - 1));
+    if (turn !== hoveredTurn) {
+      hoveredTurn = turn;
+      renderDaiya(lastSeries.T, lastSeries.p, lastSeries.base, lastSeries.naive, lastSeries.eai, false);
+    }
+  }
+  daiyaSvg.addEventListener('pointermove', inspectFromPointer);
+  daiyaSvg.addEventListener('pointerleave', () => {
+    if (hoveredTurn !== null && lastSeries) {
+      hoveredTurn = null;
+      renderDaiya(lastSeries.T, lastSeries.p, lastSeries.base, lastSeries.naive, lastSeries.eai, false);
+    }
+  });
+
+  ['c-agent', 'c-sess', 'c-turns', 'c-pref', 'c-obs'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => updateAll(true));
+  });
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (lastSeries) renderDaiya(lastSeries.T, lastSeries.p, lastSeries.base, lastSeries.naive, lastSeries.eai, false);
+    }, 100);
+  });
+
+  updateAll(false);
+
+  // ── 3. Empirical Technique Leaderboard (Experiments 001–008) ──
+  const BASE_EXP_URL = 'https://github.com/hatimmakki/efficient-ai/blob/master/experiments/';
+  const LEADERBOARD = [
+    { name: 'Full eai Stack (outline + squeeze + Prefix Diet + proxy)', layer: 'All 4 Layers', filterKey: 'All', comp: '7.3 ms hook · 248 tok MCP · 100% pass', full: '−27.1% Claude · −32.5% Gemini · −37.6% Codex USD', risk: 'None (lossless)', exp: 'Exp 008', path: '008-paired-e2e-benchmark/RESULTS.md', good: true },
+    { name: 'eai outline (tree-sitter AST symbol reader)', layer: 'Reads', filterKey: 'Reads', comp: '−65.7% to −96.4% explore · −57.0% to −89.5% combined', full: '−37.9% to −47.2% read tokens (118.1M fewer re-sent)', risk: 'Low (lossless)', exp: 'Exp 005 / 008', path: '005-outline-read-layer/RESULTS.md', good: true },
+    { name: 'eai proxy Cache-Aware Batch Mask (K=12, M=6)', layer: 'History', filterKey: 'History', comp: 'Fixed-boundary masking · live cache-bust alerts', full: '−9.6% to −10.5% Claude · −21.0% to −34.8% Codex USD', risk: 'Low', exp: 'Exp 007', path: '007-cache-aware-observation-masking/RESULTS.md', good: true },
+    { name: 'Static-Prefix Diet (eai audit --fix)', layer: 'Prefix', filterKey: 'Prefix', comp: '−85.0% AGENTS.md · −64.5% skill tax · −65.0% MCP', full: '−67.9% idle prefix (320,550 raw tok / 50 turns)', risk: 'None', exp: 'Exp 004', path: '004-free-wins-and-static-diet/RESULTS.md', good: true },
+    { name: 'eai squeeze (Lossless spill + H7 loop guard)', layer: 'Streams', filterKey: 'Streams', comp: '−94.2% to −96.7% pytest/cargo/go · 100% errors kept', full: '−92.6% stream tokens · 0 recovery loops (.eai/logs)', risk: 'None (retrievable)', exp: 'Exp 006 / 008', path: '006-squeeze-retrievable-compression/RESULTS.md', good: true },
+    { name: 'Prose-Only Brevity (AGENTS.md H6)', layer: 'Output', filterKey: 'Output', comp: '−65.3% assistant reply prose', full: '78.5% of caveman savings with intact code & grammar', risk: 'Low', exp: 'Exp 004', path: '004-free-wins-and-static-diet/RESULTS.md', good: true },
+    { name: 'Naive Per-Turn History Pruning (Myth Busted)', layer: 'History', filterKey: 'History', comp: '−52% raw tokens (misleading metric)', full: '+9.2% to +111.8% HIGHER Claude API bill', risk: 'Cache bust!', exp: 'Exp 007', path: '007-cache-aware-observation-masking/RESULTS.md', good: false },
+    { name: 'Code Indentation Reformatting (Myth Busted)', layer: 'Reads', filterKey: 'Reads', comp: '0.0% (2-space) · +1.9% worse (tabs)', full: 'Modern BPE merges space runs; never reformat', risk: 'Counterproductive', exp: 'Exp 001', path: '001-tokenizer-baselines/RESULTS.md', good: false },
+  ];
+
+  function renderLeaderboard(filter) {
+    const rows = filter === 'all' ? LEADERBOARD : LEADERBOARD.filter(r => r.filterKey === filter);
+    document.getElementById('lb-body').innerHTML = rows.map(r => `
+      <tr class="${r.good ? '' : 'myth-row'}">
+        <td data-label="Technique"><span class="tech-name">${r.name}</span></td>
+        <td data-label="Layer"><span class="layer-chip">${r.layer}</span></td>
+        <td data-label="Stream / Component Impact" class="num">${r.comp}</td>
+        <td data-label="Full-Session / Cost Impact"><span class="impact-badge num ${r.good ? 'good' : 'bad'}">${r.full}</span></td>
+        <td data-label="Quality Risk">${r.risk}</td>
+        <td data-label="Proof"><a class="proof-link" href="${BASE_EXP_URL}${r.path}">${r.exp} ${EXT_SVG}</a></td>
+      </tr>
+    `).join('');
+  }
+
+  document.querySelectorAll('#lb-filters .ftab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#lb-filters .ftab').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      renderLeaderboard(btn.dataset.layer);
+    });
+  });
+  renderLeaderboard('all');
+})();
 </script>
 </body>
 </html>
