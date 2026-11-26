@@ -94,13 +94,15 @@ cargo install --path tools/eai
 Then run **one command** to inspect your current spend, auto-configure every installed agent, or open the local performance dashboard:
 ```bash
 eai analyze --since 14d    # Auto-discovers Claude Code, Antigravity, Gemini CLI & Codex transcripts + Est. USD
-eai init                   # Auto-detects agents, merges hooks safely, installs lean AGENTS.md & baseline snapshot
+eai init                   # Auto-detects agents, wires hooks + live statusLine, installs lean AGENTS.md & baseline
+eai statusline preview     # Live zero-token bottom bar for Antigravity CLI (stacked) & Claude Code (cache/cost/savings)
+eai update [--check]       # Self-updates eai from GitHub Releases with SHA-256 verification (24h passive notice)
 eai impact                 # Before vs. After project proof: USD/session, cache hit rate, recovery rate & advisor
 eai dashboard              # 100% local offline web UI (http://127.0.0.1:7420) with live charts & SVG card export
 eai watch                  # Live terminal monitor with real-time cache-bust alerts
 eai share                  # Generates privacy-sanitized SVG Efficiency Proof Card (eai-efficiency-card.svg)
-eai doctor                 # Verifies hooks, <10ms engine latency, shims, & static-prefix health
-eai uninstall              # Cleanly removes efficient-ai hooks & managed blocks without touching your rules
+eai doctor                 # Verifies hooks, statusLine, <10ms engine latency, shims, & static-prefix health
+eai uninstall              # Cleanly removes efficient-ai hooks, statusLine & managed blocks without touching your rules
 ```
 
 ### 2. Native Plugin Marketplaces & Universal MCP

@@ -362,12 +362,14 @@ fn build_antigravity_receipt(cwd: &Path) -> Value {
         parts.join(" + ")
     };
 
+    let update_suffix = crate::update::antigravity_receipt_update_suffix().unwrap_or_default();
     let md = format!(
-        "`[eai]` Saved **~{} tok** this turn ({}) · Project total: **{} tok** · Recovery rate: **{:.1}%**",
+        "`[eai]` Saved **~{} tok** this turn ({}) · Project total: **{} tok** · Recovery rate: **{:.1}%**{}",
         turn_summary.total_tokens_saved,
         breakdown,
         total_summary.total_tokens_saved,
-        total_summary.recovery_rate_pct
+        total_summary.recovery_rate_pct,
+        update_suffix
     );
 
     json!({

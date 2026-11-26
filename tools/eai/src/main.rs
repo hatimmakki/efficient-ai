@@ -7,8 +7,10 @@ mod mcp;
 mod pricing;
 mod proxy;
 mod setup;
+mod statusline;
 mod telemetry;
 mod tokscope;
+mod update;
 
 use std::env;
 use std::path::PathBuf;
@@ -19,10 +21,12 @@ fn print_help() {
         "eai {} — Same quality, fewer tokens (Claude Code, Antigravity, Gemini CLI, Codex, Cursor)\n\
          \n\
          SETUP & HEALTH:\n\
-         \x20 eai init [--project <dir>] [--global] [--mcp] [--agents auto|...]\n\
-         \x20 eai doctor [--project <dir>]                     Verify hooks, shims, latency & prefix health\n\
+         \x20 eai init [--project <dir>] [--global] [--mcp] [--no-statusline] [--agents auto|...]\n\
+         \x20 eai statusline [install|off|preview]             Zero-token live bottom bar (Antigravity & Claude Code)\n\
+         \x20 eai update [--check] [--version <tag>] [--force] Self-update `eai` from GitHub Releases (SHA-256)\n\
+         \x20 eai doctor [--project <dir>]                     Verify hooks, statusLine, shims, latency & prefix\n\
          \x20 eai pause / eai resume [--project <dir>]         Temporarily pause or resume hook rewriting\n\
-         \x20 eai uninstall [--project <dir>] [--global]       Cleanly remove efficient-ai hooks & shims\n\
+         \x20 eai uninstall [--project <dir>] [--global]       Cleanly remove efficient-ai hooks, statusLine & shims\n\
          \n\
          MONITORING & IMPACT PROOF:\n\
          \x20 eai impact [--project <dir>] [--since 30d]       Before vs. After project impact & advisor report\n\
@@ -54,6 +58,7 @@ fn main() -> ExitCode {
     }
     if matches!(args[0].as_str(), "-V" | "--version" | "version") {
         println!("eai {}", env!("CARGO_PKG_VERSION"));
+        update::print_update_banner_if_available();
         return ExitCode::SUCCESS;
     }
 
@@ -61,13 +66,13 @@ fn main() -> ExitCode {
     let rest = &args[1..];
     let cwd = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
 
-    match sub {
+    let code = match sub {
         "outline" => {
             let (code, metrics) = outline::run_cli(rest);
             if let Some(m) = metrics {
                 telemetry::record_outline(&cwd, m.action, m.raw_chars, m.output_chars);
             }
-            code
+            return code;
         }
         "squeeze" => {
             let (code, metrics) = squeeze::run_cli(rest);
@@ -82,29 +87,38 @@ fn main() -> ExitCode {
                     m.loop_detected,
                 );
             }
-            code
+            return code;
         }
-        "hook" => ExitCode::from(hooks::cmd_hook(rest) as u8),
-        "mcp" => ExitCode::from(mcp::cmd_mcp(rest) as u8),
-        "proxy" => ExitCode::from(proxy::cmd_proxy(rest) as u8),
-        "pause" => ExitCode::from(setup::cmd_pause(rest, true) as u8),
-        "resume" => ExitCode::from(setup::cmd_pause(rest, false) as u8),
-        "analyze" => ExitCode::from(tokscope::cmd_analyze(rest) as u8),
-        "pricing" => ExitCode::from(pricing::cmd_pricing(rest) as u8),
-        "audit" => ExitCode::from(tokscope::cmd_audit(rest) as u8),
-        "sanitize" => ExitCode::from(tokscope::cmd_sanitize(rest) as u8),
-        "selftest" => ExitCode::from(tokscope::cmd_selftest() as u8),
-        "init" | "setup" => ExitCode::from(setup::cmd_init(rest) as u8),
-        "doctor" => ExitCode::from(setup::cmd_doctor(rest) as u8),
-        "stats" => ExitCode::from(telemetry::cmd_stats(rest) as u8),
-        "impact" => ExitCode::from(impact::cmd_impact(rest) as u8),
-        "share" => ExitCode::from(impact::cmd_share(rest) as u8),
-        "watch" => ExitCode::from(impact::cmd_watch(rest) as u8),
-        "dashboard" => ExitCode::from(dashboard::cmd_dashboard(rest) as u8),
-        "uninstall" => ExitCode::from(setup::cmd_uninstall(rest) as u8),
+        "hook" => return ExitCode::from(hooks::cmd_hook(rest) as u8),
+        "mcp" => return ExitCode::from(mcp::cmd_mcp(rest) as u8),
+        "statusline" => return ExitCode::from(statusline::cmd_statusline(rest) as u8),
+        "update" => return ExitCode::from(update::cmd_update(rest) as u8),
+        "proxy" => return ExitCode::from(proxy::cmd_proxy(rest) as u8),
+        "pause" => setup::cmd_pause(rest, true),
+        "resume" => setup::cmd_pause(rest, false),
+        "analyze" => tokscope::cmd_analyze(rest),
+        "pricing" => pricing::cmd_pricing(rest),
+        "audit" => tokscope::cmd_audit(rest),
+        "sanitize" => tokscope::cmd_sanitize(rest),
+        "selftest" => tokscope::cmd_selftest(),
+        "init" | "setup" => setup::cmd_init(rest),
+        "doctor" => setup::cmd_doctor(rest),
+        "stats" => telemetry::cmd_stats(rest),
+        "impact" => impact::cmd_impact(rest),
+        "share" => impact::cmd_share(rest),
+        "watch" => impact::cmd_watch(rest),
+        "dashboard" => dashboard::cmd_dashboard(rest),
+        "uninstall" => setup::cmd_uninstall(rest),
         other => {
             eprintln!("Unknown command '{}'. Run `eai --help` for usage.", other);
-            ExitCode::from(2)
+            return ExitCode::from(2);
         }
+    };
+
+    if matches!(sub, "doctor" | "impact" | "analyze" | "stats" | "audit")
+        && !rest.iter().any(|a| a == "--json")
+    {
+        update::print_update_banner_if_available();
     }
+    ExitCode::from(code as u8)
 }

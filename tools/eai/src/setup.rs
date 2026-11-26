@@ -162,6 +162,113 @@ pub fn merge_claude_settings(settings_path: &Path, eai_exe: &Path) -> std::io::R
     Ok(true)
 }
 
+fn existing_custom_statusline(obj: &Map<String, Value>) -> bool {
+    let Some(existing) = obj.get("statusLine") else {
+        return false;
+    };
+    let cmd = existing
+        .get("command")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim();
+    if cmd.is_empty() {
+        return false;
+    }
+    !(cmd.contains("eai") && cmd.contains("statusline"))
+}
+
+/// Safely merge an efficient-ai Antigravity CLI `statusLine` into `~/.gemini/antigravity-cli/settings.json`.
+/// Uses `stack_with_default: true` so the eai telemetry line renders cleanly below the default bar.
+/// Returns `Ok(false)` without modifying if a non-empty non-eai custom statusLine already exists and `force == false`.
+pub fn merge_antigravity_statusline(
+    settings_path: &Path,
+    eai_exe: &Path,
+    force: bool,
+) -> std::io::Result<bool> {
+    let mut root = read_json_or_empty(settings_path);
+    let obj = root.as_object_mut().unwrap();
+    if !force && existing_custom_statusline(obj) {
+        return Ok(false);
+    }
+    let cmd = format!("{} statusline", quote_exe(eai_exe));
+    obj.insert(
+        "statusLine".to_string(),
+        json!({
+            "type": "command",
+            "command": cmd,
+            "stack_with_default": true,
+            "enabled": true,
+            "padding": 0
+        }),
+    );
+    write_json_with_backup(settings_path, &root)?;
+    Ok(true)
+}
+
+/// Safely merge an efficient-ai Claude Code `statusLine` into `~/.claude/settings.json`.
+/// Returns `Ok(false)` without modifying if a non-empty non-eai custom statusLine already exists and `force == false`.
+pub fn merge_claude_statusline(
+    settings_path: &Path,
+    eai_exe: &Path,
+    force: bool,
+) -> std::io::Result<bool> {
+    let mut root = read_json_or_empty(settings_path);
+    let obj = root.as_object_mut().unwrap();
+    if !force && existing_custom_statusline(obj) {
+        return Ok(false);
+    }
+    let cmd = format!("{} statusline", quote_exe(eai_exe));
+    obj.insert(
+        "statusLine".to_string(),
+        json!({
+            "type": "command",
+            "command": cmd
+        }),
+    );
+    write_json_with_backup(settings_path, &root)?;
+    Ok(true)
+}
+
+/// Remove `statusLine` from a settings JSON file only if it belongs to `eai statusline`.
+pub fn remove_eai_statusline(settings_path: &Path) -> std::io::Result<bool> {
+    if !settings_path.is_file() {
+        return Ok(false);
+    }
+    let mut root = read_json_or_empty(settings_path);
+    let Some(obj) = root.as_object_mut() else {
+        return Ok(false);
+    };
+    let is_ours = obj
+        .get("statusLine")
+        .and_then(|s| s.get("command"))
+        .and_then(|v| v.as_str())
+        .map(|c| c.contains("eai") && c.contains("statusline"))
+        .unwrap_or(false);
+    if !is_ours {
+        return Ok(false);
+    }
+    obj.remove("statusLine");
+    write_json_with_backup(settings_path, &root)?;
+    Ok(true)
+}
+
+fn check_statusline_state(path: &Path) -> &'static str {
+    if !path.is_file() {
+        return "not configured";
+    }
+    let root = read_json_or_empty(path);
+    match root
+        .get("statusLine")
+        .and_then(|s| s.get("command"))
+        .and_then(|v| v.as_str())
+        .map(str::trim)
+    {
+        Some("") | None => "not configured",
+        Some(cmd) if cmd.contains("eai") && cmd.contains("statusline") => "wired (eai statusline)",
+        Some(_) => "custom (preserved)",
+    }
+}
+
 /// Safely merge an efficient-ai Antigravity hook into `.agents/hooks.json` or `~/.gemini/config/hooks.json`.
 pub fn merge_antigravity_hooks(hooks_path: &Path, eai_exe: &Path) -> std::io::Result<bool> {
     let mut root = read_json_or_empty(hooks_path);
@@ -372,6 +479,7 @@ pub fn cmd_init(args: &[String]) -> i32 {
     let mut enable_mcp = false;
     let mut agents_arg = "auto".to_string();
     let mut capture_baseline = true;
+    let mut want_statusline = true;
 
     let mut i = 0;
     while i < args.len() {
@@ -382,6 +490,8 @@ pub fn cmd_init(args: &[String]) -> i32 {
             }
             "--global" | "-g" => global = true,
             "--mcp" => enable_mcp = true,
+            "--statusline" => want_statusline = true,
+            "--no-statusline" => want_statusline = false,
             "--agents" if i + 1 < args.len() => {
                 agents_arg = args[i + 1].clone();
                 i += 1;
@@ -389,8 +499,8 @@ pub fn cmd_init(args: &[String]) -> i32 {
             "--no-baseline" => capture_baseline = false,
             "-h" | "--help" => {
                 println!(
-                    "Usage: eai init [--project <dir>] [--global] [--mcp] [--agents auto|claude,antigravity,gemini,codex,cursor] [--no-baseline]\n\
-                     Auto-detects installed AI coding agents, wires native hooks, optional ultra-lean MCP server (<280 tok), PATH shims, lean AGENTS.md, and snapshots a Pre-EAI baseline."
+                    "Usage: eai init [--project <dir>] [--global] [--mcp] [--no-statusline] [--agents auto|claude,antigravity,gemini,codex,cursor] [--no-baseline]\n\
+                     Auto-detects installed AI coding agents, wires native hooks, live statusLine, optional ultra-lean MCP server (<280 tok), PATH shims, lean AGENTS.md, and snapshots a Pre-EAI baseline."
                 );
                 return 0;
             }
@@ -446,11 +556,25 @@ pub fn cmd_init(args: &[String]) -> i32 {
             if merge_claude_settings(&p, &eai_exe).is_ok() {
                 println!("- [OK] Claude Code global hook wired: `{}`", p.display());
             }
+            if want_statusline {
+                if let Ok(true) = merge_claude_statusline(&p, &eai_exe, false) {
+                    println!("- [OK] Claude Code live statusLine wired: `{}`", p.display());
+                }
+            }
         }
         if want_agy {
             let p = h.join(".gemini").join("config").join("hooks.json");
             if merge_antigravity_hooks(&p, &eai_exe).is_ok() {
                 println!("- [OK] Antigravity global hook wired: `{}`", p.display());
+            }
+            if want_statusline {
+                let sp = h.join(".gemini").join("antigravity-cli").join("settings.json");
+                if let Ok(true) = merge_antigravity_statusline(&sp, &eai_exe, false) {
+                    println!(
+                        "- [OK] Antigravity CLI live statusLine wired (stacked): `{}`",
+                        sp.display()
+                    );
+                }
             }
         }
         if want_gemini {
@@ -539,6 +663,27 @@ pub fn cmd_init(args: &[String]) -> i32 {
         let mcp_json = project.join(".mcp.json");
         if merge_mcp_config(&mcp_json, &eai_exe).is_ok() {
             println!("- [OK] Ultra-lean MCP server wired: `.mcp.json` (`eai mcp`, <280 idle tok)");
+        }
+    }
+
+    // 2b. Live zero-token bottom status bar for Antigravity CLI & Claude Code
+    if want_statusline {
+        if let Some(ref h) = home {
+            if want_agy && h.join(".gemini").join("antigravity-cli").is_dir() {
+                let sp = h.join(".gemini").join("antigravity-cli").join("settings.json");
+                if let Ok(true) = merge_antigravity_statusline(&sp, &eai_exe, false) {
+                    println!(
+                        "- [OK] Antigravity CLI live statusLine wired (stacked): `{}`",
+                        sp.display()
+                    );
+                }
+            }
+            if want_claude && h.join(".claude").is_dir() {
+                let sp = h.join(".claude").join("settings.json");
+                if let Ok(true) = merge_claude_statusline(&sp, &eai_exe, false) {
+                    println!("- [OK] Claude Code live statusLine wired: `{}`", sp.display());
+                }
+            }
         }
     }
 
@@ -702,6 +847,13 @@ pub fn cmd_doctor(args: &[String]) -> i32 {
             "none (run `eai init`)"
         }
     );
+    println!(
+        "- **Live statusLine:** Antigravity={} | Claude Code={}",
+        h.map(|d| check_statusline_state(&d.join(".gemini").join("antigravity-cli").join("settings.json")))
+            .unwrap_or("n/a"),
+        h.map(|d| check_statusline_state(&d.join(".claude").join("settings.json")))
+            .unwrap_or("n/a")
+    );
     0
 }
 
@@ -782,6 +934,14 @@ pub fn cmd_uninstall(args: &[String]) -> i32 {
                     println!("- Removed efficient-ai hook from `{}`", p.display());
                 }
             }
+            for sp in [
+                h.join(".claude").join("settings.json"),
+                h.join(".gemini").join("antigravity-cli").join("settings.json"),
+            ] {
+                if let Ok(true) = remove_eai_statusline(&sp) {
+                    println!("- Removed eai statusLine from `{}`", sp.display());
+                }
+            }
             let shims = h.join(".eai").join("shims");
             if shims.is_dir() && fs::remove_dir_all(&shims).is_ok() {
                 println!("- Removed `{}`", shims.display());
@@ -857,6 +1017,7 @@ mod tests {
             "--agents".into(),
             "all".into(),
             "--no-baseline".into(),
+            "--no-statusline".into(),
         ]);
         assert_eq!(rc, 0);
 
@@ -888,6 +1049,49 @@ mod tests {
         let md_after = fs::read_to_string(tmp.join("AGENTS.md")).unwrap();
         assert!(md_after.contains("# Team Rules"));
         assert!(!md_after.contains(MANAGED_START));
+
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_statusline_merge_preserves_custom_and_removes_cleanly() {
+        let tmp = env::temp_dir().join("eai_test_statusline_setup");
+        let _ = fs::remove_dir_all(&tmp);
+        fs::create_dir_all(&tmp).unwrap();
+
+        let agy_settings = tmp.join("agy_settings.json");
+        fs::write(
+            &agy_settings,
+            r#"{"theme":"dark","statusLine":{"type":"","command":"","enabled":true}}"#,
+        )
+        .unwrap();
+        let exe = Path::new("/usr/local/bin/eai");
+
+        assert_eq!(check_statusline_state(&agy_settings), "not configured");
+        assert!(merge_antigravity_statusline(&agy_settings, exe, false).unwrap());
+        assert_eq!(check_statusline_state(&agy_settings), "wired (eai statusline)");
+        let txt = fs::read_to_string(&agy_settings).unwrap();
+        assert!(txt.contains("\"stack_with_default\": true"));
+        assert!(txt.contains("statusline"));
+        assert!(txt.contains("\"theme\": \"dark\""));
+
+        // Clean removal restores user keys
+        assert!(remove_eai_statusline(&agy_settings).unwrap());
+        let after = fs::read_to_string(&agy_settings).unwrap();
+        assert!(!after.contains("statusLine"));
+        assert!(after.contains("\"theme\": \"dark\""));
+
+        // Existing custom non-eai statusLine is preserved unless force=true
+        let claude_settings = tmp.join("claude_settings.json");
+        fs::write(
+            &claude_settings,
+            r#"{"statusLine":{"type":"command","command":"bash ~/my-bar.sh"}}"#,
+        )
+        .unwrap();
+        assert!(!merge_claude_statusline(&claude_settings, exe, false).unwrap());
+        assert!(!remove_eai_statusline(&claude_settings).unwrap());
+        assert!(merge_claude_statusline(&claude_settings, exe, true).unwrap());
+        assert!(fs::read_to_string(&claude_settings).unwrap().contains("eai statusline"));
 
         let _ = fs::remove_dir_all(&tmp);
     }
