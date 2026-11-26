@@ -1,12 +1,12 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Same quality, fewer tokens: unified CLI & local monitor for Claude Code, Antigravity, Gemini CLI, Codex & Cursor.",
   "homepage": "https://github.com/hatimmakki/efficient-ai",
   "license": "Apache-2.0",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/hatimmakki/efficient-ai/releases/download/v1.1.0/eai-x86_64-pc-windows-msvc.zip",
-      "hash": "ec88dd3f24b6e8b9308ab24c8b8bbdbd835f96212639d17492915dd83a7451a3"
+      "url": "https://github.com/hatimmakki/efficient-ai/releases/download/v1.2.0/eai-x86_64-pc-windows-msvc.zip",
+      "hash": "ea4e87602f36a847aea7280d39096ceb565b096628e636b7f3724866a9ebe89c"
     }
   },
   "bin": "eai.exe",
