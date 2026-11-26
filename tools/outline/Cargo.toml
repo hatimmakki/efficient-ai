@@ -1,6 +1,6 @@
 [package]
 name = "outline"
-version = "1.1.0"
+version = "1.2.0"
 edition = "2021"
 description = "Structure-aware code outlines (tree-sitter + .gitignore + token budget), targeted symbol reads, and enclosing-symbol search for AI coding agents."
 license = "Apache-2.0"

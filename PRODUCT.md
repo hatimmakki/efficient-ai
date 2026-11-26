@@ -12,7 +12,7 @@ Individual developers and engineering teams running AI coding agents—specifica
 
 ## Product Purpose
 
-`efficient-ai` is an Apache-2.0 open-source research project and zero-dependency unified Rust CLI (`eai`, v1.1.0) with native plugins and extensions that measures and cuts full-session AI coding agent API bills by **27.1%–37.6%** while keeping 100% lossless recovery and prompt-cache stability.
+`efficient-ai` is an Apache-2.0 open-source research project and zero-dependency unified Rust CLI (`eai`, v1.2.0) with native plugins and extensions that measures and cuts full-session AI coding agent API bills by **27.1%–37.6%** while keeping 100% lossless recovery and prompt-cache stability.
 
 On the public website (`https://hatimmakki.github.io/efficient-ai/`), success means a visiting developer immediately understands why full-session cache economics beat naive token wrappers, verifies the real dollar impact for their agent/workload, and copies and runs the 1-click install command for their environment.
 
@@ -39,7 +39,7 @@ Unlike single-stream "token killer" wrappers that advertise raw bytes stripped f
   1. Multi-platform 1-click copy install command switcher (`macOS / Linux`, `Windows PowerShell`, `Claude Code`, `Antigravity`, `Gemini CLI`, `Codex CLI`, `Cursor / MCP`).
   2. Interactive Prompt-Cache & Token Cost Calculator calibrated to Experiments 003–008 (exact LCP cache simulation comparing Vanilla Baseline, Naive Per-Turn Pruning $M=6$, and Full `efficient-ai` Stack across Claude Sonnet, Antigravity/Gemini Pro, and Codex/GPT-5).
   3. Filterable Empirical Technique Leaderboard covering Experiments 001–008 across layers (`All`, `Reads`, `History`, `Prefix`, `Streams`, `Output`).
-- **Release & privacy invariants:** Current version is `v1.1.0`; Apache-2.0 open source; 100% local execution with zero cloud telemetry or external data upload.
+- **Release & privacy invariants:** Current version is `v1.2.0`; Apache-2.0 open source; 100% local execution with zero cloud telemetry or external data upload.
 - **Existing SVGs:** `assets/hero-demo.svg`, `assets/architecture-flow.svg`, and `assets/sample-proof-card.svg` are not binding brand assets for the website and may be replaced or omitted to fit the redesigned page.
 - **Undecided / excluded:** `packages/cli` is not yet published to npm; do not advertise `npx efficient-ai` as an active primary install command.
 
@@ -60,7 +60,7 @@ Unlike single-stream "token killer" wrappers that advertise raw bytes stripped f
   - `eai squeeze`: −92.6% stream tokens (−94.2% to −96.7% on `pytest`/`cargo`/`go`), 100% error retention, zero recovery loops.
   - Prose-Only Brevity (`H6`): −65.3% assistant reply prose (78.5% of caveman savings with intact code/grammar).
   - Indentation reformatting (`Exp 001`): 0.0% for 2-space, +1.9% worse for tabs (myth busted).
-- **Distribution:** GitHub Release `v1.1.0` (`https://github.com/hatimmakki/efficient-ai/releases/tag/v1.1.0`) with prebuilt binaries for macOS (arm64/x64), Linux (x64), and Windows (x64), plus `install.sh` and `install.ps1`.
+- **Distribution:** GitHub Release `v1.2.0` (`https://github.com/hatimmakki/efficient-ai/releases/tag/v1.2.0`) with prebuilt binaries for macOS (arm64/x64), Linux (x64), and Windows (x64), plus `install.sh` and `install.ps1`.
 - **Absences (do not fabricate):** No customer logos, third-party testimonials, press quotes, commercial pricing tiers, SaaS hosting, or unverified local-only session counts (do not carry forward the old `2,824 sessions` figure).
 
 ## Product Principles
